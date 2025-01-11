@@ -1,0 +1,86 @@
+{
+    "FRC insert command boilerplate code": {
+        "prefix": "frccmd",
+        "body": [
+			"import edu.wpi.first.wpilibj2.command.Command;\n",
+
+			// Class name
+			"/**",
+			" * @author ",
+			" */",
+			"public class $TM_FILENAME_BASE extends Command {\n",
+
+            // Subsystem
+            "\tprivate final Subsystem$1 m_subsystem;\n",
+
+			// Constructor
+			"\tpublic $TM_FILENAME_BASE(Subsystem$1 subsystem) {",
+			"\t\tm_subsystem = subsystem;",
+			"\t\t",
+            "\t\t// Use addRequirements() here to declare subsystem dependencies.",
+            "\t\taddRequirements(subsystem);",
+			"\t}\n",
+
+			// Command methods
+
+            "\t// Called when the command is initially scheduled.",
+			"\t@Override",
+            "\tpublic void initialize() {",
+			"\t\t$4",
+			"\t}\n",
+
+            "\t// Called every time the scheduler runs while the command is scheduled.",
+			"\t@Override",
+            "\tpublic void execute() {",
+			"\t\t$5",
+			"\t}\n",
+
+            "\t// Called once the command ends or is interrupted.",
+			"\t@Override",
+            "\tpublic void end(boolean interrupted) {",
+			"\t\t$6",
+			"\t}\n",
+
+            "\t// Returns true when the command should end.",
+			"\t@Override",
+            "\tpublic boolean isFinished() {",
+            "\t\treturn false$7;",
+			"\t}\n",
+
+			"}"
+		]
+    },
+    "FRC insert Subsystem boilerplate code": {
+        "prefix": "frcsys",
+        "body": [
+			"import edu.wpi.first.wpilibj2.command.SubsystemBase;\n",
+
+			// Class name
+			"public class $TM_FILENAME_BASE extends SubsystemBase {\n",
+
+			"\tprivate final ${TM_FILENAME_BASE}IO io;",
+			"\tprivate final ${TM_FILENAME_BASE}IOInputsAutoLogged inputs = new ${TM_FILENAME_BASE}IOInputsAutoLogged();\n",
+
+			// Constructor
+			"\tpublic $TM_FILENAME_BASE(${TM_FILENAME_BASE}IO io) {",
+			"\t\tthis.io = io;",
+			"\t}\n",
+
+			// Subsystem methods
+
+			"\t@Override",
+            "\tpublic void periodic() {",
+            "\t\t// This method will be called once per scheduler run",
+			"\t\tio.updateInputs(inputs);",
+			"\t\tLogger.processInputs(\"$TM_FILENAME_BASE\", inputs);",
+			"\t}\n",
+
+			"\t@Override",
+            "\tpublic void simulationPeriodic() {",
+            "\t\t// This method will be called once per scheduler run during simulation",
+			"\t}\n",
+
+			"}"
+        ]
+    }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "Stormont",
+  "rotations": [
+    {
+      "axis": "y",
+      "degrees": 180
+    },
+    {
+      "axis": "z",
+      "degrees": 90
+    }
+  ],
+  "position": [0, -0.15, 0.25],
+  "cameras": [
+    {
+      "name": "FRONT_CAM",
+      "rotations": [
+        {
+          "axis": "y",
+          "degrees": 0
+        }
+      ],
+      "position": [0.0, 0.0, 0.425],
+      "resolution": [1280, 800],
+      "fov": 80
+    }
+  ]
+}
