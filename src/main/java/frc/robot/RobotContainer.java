@@ -14,18 +14,25 @@
 
 package frc.robot;
 
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.kAuto;
 import frc.robot.Constants.kAutoAlign.kReef;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -36,6 +43,10 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.util.AlignHelper;
+import frc.robot.util.WaitThen;
+import java.io.IOException;
+import org.json.simple.parser.ParseException;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 
@@ -47,21 +58,22 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  */
 public class RobotContainer {
   // Subsystems
-  private final Drive sys_drive;
-
+  public final Drive sys_drive;
 
   // Controller
-  private final CommandXboxController primaryController = new CommandXboxController(0);
-
+  private final CommandXboxController primaryController   = new CommandXboxController(0);
+  private final CommandXboxController secondaryController = new CommandXboxController(1);
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
+  // Alerts
+  private final Alert primaryDisconnectedAlert   = new Alert("Primary Controller Disconnected!"  , AlertType.kError);
+  private final Alert secondaryDisconnectedAlert = new Alert("Secondary Controller Disconnected!", AlertType.kError);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     DriverStation.silenceJoystickConnectionWarning(true);
-
 
     switch (Constants.currentMode) {
       case REAL -> {
@@ -101,6 +113,15 @@ public class RobotContainer {
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
+    if (kAuto.RESET_ODOM_ON_CHANGE)
+      autoChooser.getSendableChooser().onChange((path) -> sys_drive.setPose(getStartingPose()));
+      
+    SmartDashboard.putData("Reset", 
+      Commands.runOnce(
+        () -> sys_drive.setPose(getStartingPose())
+      ).ignoringDisable(true)
+    );
+
     // Set up SysId routines
     autoChooser.addOption(
         "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(sys_drive));
@@ -119,11 +140,61 @@ public class RobotContainer {
 
     // Configure the button bindings
     configureButtonBindings();
+
+    // Controller Alerts
+    new Trigger(() -> !primaryController.isConnected())
+        .onTrue(Commands.runOnce(() -> {
+          secondaryController.setRumble(RumbleType.kBothRumble, 0.50);
+          primaryDisconnectedAlert.set(true);
+        }).ignoringDisable(true).andThen(
+          new WaitThen(0.5, Commands.runOnce(() -> secondaryController.setRumble(RumbleType.kBothRumble, 0.0))).ignoringDisable(true)
+        )).onFalse(
+          Commands.runOnce(() -> primaryDisconnectedAlert.set(false)).ignoringDisable(true)
+        );
+
+    new Trigger(() -> !secondaryController.isConnected())
+        .onTrue(Commands.runOnce(() -> {
+          primaryController.setRumble(RumbleType.kBothRumble, 0.50);
+          secondaryDisconnectedAlert.set(true);
+        }).ignoringDisable(true).andThen(
+          new WaitThen(0.5, Commands.runOnce(() -> primaryController.setRumble(RumbleType.kBothRumble, 0.0))).ignoringDisable(true)
+        )).onFalse(
+          Commands.runOnce(() -> secondaryDisconnectedAlert.set(false)).ignoringDisable(true)
+        );
+
+    // TODO: fix on real robot
+    new Trigger(DriverStation::isDSAttached)
+        .onTrue(Commands.runOnce(() -> {
+            primaryDisconnectedAlert  .set(!primaryController  .isConnected());
+            secondaryDisconnectedAlert.set(!secondaryController.isConnected());
+          }).ignoringDisable(true)
+        );
+  }
+
+  @AutoLogOutput(key = "Odometry/StartingPose")
+  public Pose2d getStartingPose() {
+    String path = autoChooser.getSendableChooser().getSelected();
+
+    if (path.equals("None")) return new Pose2d();
+        
+    try {
+      Pose2d pose = PathPlannerAuto.getPathGroupFromAutoFile(path).get(0).getStartingHolonomicPose().get();
+
+      return AutoBuilder.shouldFlip() ? FlippingUtil.flipFieldPose(pose) : pose;
+    } catch (IOException | ParseException e) {
+      System.out.println("Couldn't reset Odometry from path: " + path);
+      return new Pose2d();
+    }
   }
 
   private void registerCommands() {
     NamedCommands.registerCommand("ALIGN_LEFT" , DriveCommands.alignToPoint(sys_drive, () -> AlignHelper.getClosestReef(sys_drive.getPose()).transformBy(kReef.LEFT_OFFSET_TO_BRANCH )));
     NamedCommands.registerCommand("ALIGN_RIGHT", DriveCommands.alignToPoint(sys_drive, () -> AlignHelper.getClosestReef(sys_drive.getPose()).transformBy(kReef.RIGHT_OFFSET_TO_BRANCH)));
+
+    // TODO: Finish Commands
+    NamedCommands.registerCommand("PREPARE_STATION", Commands.none());
+    NamedCommands.registerCommand("STATION_PICKUP", Commands.waitSeconds(0.35));
+    NamedCommands.registerCommand("SCORE_CORAL", Commands.waitSeconds(0.45));
   }
 
   /**

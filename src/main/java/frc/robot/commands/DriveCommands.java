@@ -17,7 +17,6 @@ package frc.robot.commands;
 
 import static edu.wpi.first.units.Units.*;
 
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -34,7 +33,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.kAutoAlign;
-import frc.robot.Constants.kDrive;
 import frc.robot.subsystems.drive.Drive;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -50,7 +48,7 @@ public class DriveCommands {
   private static final double ANGLE_MAX_VELOCITY = 8.0;
   private static final double ANGLE_MAX_ACCELERATION = 20.0;
   private static final double FF_START_DELAY = 2.0; // Secs
-  private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
+  private static final double FF_RAMP_RATE = 1.0; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
   public static double speedModifier = 1;
@@ -189,19 +187,19 @@ public class DriveCommands {
   public static Command alignToPoint(Drive drive, Supplier<Pose2d> target) {
     ProfiledPIDController xController =
       new ProfiledPIDController(
-          kDrive.ALIGN_PID.kP,
-          kDrive.ALIGN_PID.kI,
-          kDrive.ALIGN_PID.kD,
-          new TrapezoidProfile.Constraints(Math.sqrt(drive.getMaxLinearSpeedMetersPerSec()), 1.5)
+          kAutoAlign.ALIGN_PID.kP,
+          kAutoAlign.ALIGN_PID.kI,
+          kAutoAlign.ALIGN_PID.kD,
+          new TrapezoidProfile.Constraints(kAutoAlign.MAX_AUTO_ALIGN_VELOCITY.in(MetersPerSecond), kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION.in(MetersPerSecondPerSecond))
         );
 
 
     ProfiledPIDController yController =
       new ProfiledPIDController(
-          kDrive.ALIGN_PID.kP,
-          kDrive.ALIGN_PID.kI,
-          kDrive.ALIGN_PID.kD,
-          new TrapezoidProfile.Constraints(Math.sqrt(drive.getMaxLinearSpeedMetersPerSec()), 1.5)
+          kAutoAlign.ALIGN_PID.kP,
+          kAutoAlign.ALIGN_PID.kI,
+          kAutoAlign.ALIGN_PID.kD,
+          new TrapezoidProfile.Constraints(kAutoAlign.MAX_AUTO_ALIGN_VELOCITY.in(MetersPerSecond), kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION.in(MetersPerSecondPerSecond))
         );
 
 
@@ -213,39 +211,38 @@ public class DriveCommands {
           new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
     angleController.enableContinuousInput(-Math.PI, Math.PI);
 
-
-    return Commands.run(() -> {
+    return Commands.parallel(
+      Commands.runOnce(() -> {
+        Pose2d robotPose = drive.getPose();
+        ChassisSpeeds speeds = drive.getFieldRelativeSpeeds();
+  
+        xController.reset(robotPose.getX(), speeds.vxMetersPerSecond);
+        yController.reset(robotPose.getY(), speeds.vyMetersPerSecond);
+        angleController.reset(drive.getRotation().getRadians());
+      }),
+      Commands.run(() -> {
+        Pose2d robotPose = drive.getPose();
+        Pose2d targetPose = target.get();
+  
+        double xSpeed = xController.calculate(robotPose.getX(), targetPose.getX());
+        double ySpeed = yController.calculate(robotPose.getY(), targetPose.getY());
+  
+        // Calculate angular speed
+        double omega =
+        angleController.calculate(
+            robotPose.getRotation().getRadians(), targetPose.getRotation().getRadians());
+  
+  
+        drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omega, drive.getRotation()));
+      }, drive)
+    ).until(() -> {
       Pose2d robotPose = drive.getPose();
       Pose2d targetPose = target.get();
-
-
-      double xSpeed = xController.calculate(robotPose.getX(), targetPose.getX());
-      double ySpeed = yController.calculate(robotPose.getY(), targetPose.getY());
-
-
-      // Calculate angular speed
-      double omega =
-      angleController.calculate(
-          robotPose.getRotation().getRadians(), targetPose.getRotation().getRadians());
-
-
-      drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omega, drive.getRotation()));
-    }, drive).beforeStarting(() -> {
-      Pose2d robotPose = drive.getPose();
-
-
-      xController.reset(robotPose.getX());
-      yController.reset(robotPose.getY());
-      angleController.reset(drive.getRotation().getRadians());
-    }).until(() -> {
-      Pose2d robotPose = drive.getPose();
-      Pose2d targetPose = target.get();
-
 
       return
         Math.hypot(robotPose.getX() - targetPose.getX(), robotPose.getY() - targetPose.getY()) < kAutoAlign.TRANSLATION_TOLLERANCE.in(Meters) &&
         Math.abs(drive.getRotation().getRadians() - targetPose.getRotation().getRadians()) < kAutoAlign.ROTATION_TOLLERANCE.in(Radians);
-    });
+    }).andThen(Commands.runOnce(drive::stop, drive));
   }
 
 

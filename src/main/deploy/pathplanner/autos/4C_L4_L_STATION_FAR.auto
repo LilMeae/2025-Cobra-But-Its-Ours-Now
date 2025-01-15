@@ -1,0 +1,121 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "IC to FL"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ALIGN_RIGHT"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "SCORE_CORAL"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "FL to LP"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "STATION_PICKUP"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LP to BL"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ALIGN_LEFT"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "SCORE_CORAL"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BL to LP"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "STATION_PICKUP"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LP to BL"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ALIGN_RIGHT"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "SCORE_CORAL"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BL to LP"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "STATION_PICKUP"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "LP to FL"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ALIGN_LEFT"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "SCORE_CORAL"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": false,
+  "folder": null,
+  "choreoAuto": false
+}
