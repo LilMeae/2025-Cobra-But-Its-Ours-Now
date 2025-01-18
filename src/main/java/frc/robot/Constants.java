@@ -30,8 +30,10 @@ import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.util.FieldMirror;
 
 /**
- * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
- * on a roboRIO. Change the value of "simMode" to switch between "sim" (physics sim) and "replay"
+ * This class defines the runtime mode used by AdvantageKit. The mode is always
+ * "real" when running
+ * on a roboRIO. Change the value of "simMode" to switch between "sim" (physics
+ * sim) and "replay"
  * (log replay from a file).
  */
 public final class Constants {
@@ -82,8 +84,8 @@ public final class Constants {
       static {
         TARGETS.put("BL", new Pose2d(3.668, 5.428, Rotation2d.fromDegrees(-60.000)));
         TARGETS.put("FL", new Pose2d(5.335, 5.392, Rotation2d.fromDegrees(-120.000)));
-        TARGETS.put("F" , new Pose2d(6.150, 4.026, Rotation2d.fromDegrees(180.000)));
-        TARGETS.put("B" , new Pose2d(2.850, 4.026, Rotation2d.fromDegrees(0.000)));
+        TARGETS.put("F", new Pose2d(6.150, 4.026, Rotation2d.fromDegrees(180.000)));
+        TARGETS.put("B", new Pose2d(2.850, 4.026, Rotation2d.fromDegrees(0.000)));
         TARGETS.put("BR", FieldMirror.mirrorPose(TARGETS.get("BL")));
         TARGETS.put("FR", FieldMirror.mirrorPose(TARGETS.get("FL")));
       }
@@ -91,5 +93,11 @@ public final class Constants {
       public static final Transform2d LEFT_OFFSET_TO_BRANCH = new Transform2d(0.315, 0.167, new Rotation2d());
       public static final Transform2d RIGHT_OFFSET_TO_BRANCH = new Transform2d(0.315, -0.167, new Rotation2d());
     }
+  }
+
+  public static final class kVision {
+    public static final String CAM_NAME = "limelight";
+
+    public static final int FIDUCIAL_TRUST_THRESHOLD = 1;
   }
 }
