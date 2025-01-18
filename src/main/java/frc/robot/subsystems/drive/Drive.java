@@ -164,6 +164,7 @@ public class Drive extends SubsystemBase {
     // No Subsystem requiredment because we don't want to stop driving
     DebugCommand.register("Drive-Coast", Commands.runOnce(this::coastMode)); 
     DebugCommand.register("Drive-Brake", Commands.runOnce(this::brakeMode));
+    DebugCommand.register("POSITION-REEF", Commands.runOnce(() -> setPose(new Pose2d(3.30, 4.037, new Rotation2d()))));
   }
 
   @Override

@@ -15,6 +15,6 @@ public class DebugCommand {
     public static void register(String name, Command cmd) {
         if (tab == null) tab = Shuffleboard.getTab("Debug");
         
-        tab.add(name, cmd.withName("DEBUG-" + name)).withWidget("Command");
+        tab.add(name, cmd.withName("DEBUG-" + name).ignoringDisable(true)).withWidget("Command");
     }
 }
