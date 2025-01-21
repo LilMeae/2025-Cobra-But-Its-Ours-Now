@@ -46,10 +46,13 @@ public class Vision extends SubsystemBase {
                 drive.getChassisSpeeds().omegaRadiansPerSecond, 0, 0, 0, 0);
         PoseEstimate estimate = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(kVision.CAM_NAME);
 
+        if (estimate == null)
+            return;
+
         sTagCount.setInteger(estimate.tagCount);
         sEstimatedPose.setRobotPose(estimate.pose);
 
-        if (estimate.tagCount >= kVision.FIDUCIAL_TRUST_THRESHOLD)
+        if (estimate.tagCount < kVision.FIDUCIAL_TRUST_THRESHOLD)
             return;
 
         drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds, VecBuilder.fill(.5, .5, 9999999));
