@@ -74,8 +74,8 @@ public final class Constants {
     public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY     = MetersPerSecond         .of(3.5);
     public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION = MetersPerSecondPerSecond.of(8.0);
 
-    public static final Distance TRANSLATION_TOLLERANCE = Centimeters.of(2.0);
-    public static final Angle    ROTATION_TOLLERANCE    = Degrees    .of(1.0);
+    public static final Distance TRANSLATION_TOLERANCE = Centimeters.of(2.0);
+    public static final Angle    ROTATION_TOLERANCE    = Degrees    .of(1.0);
 
     public static final Pose2d PROCESSOR_TARGET = new Pose2d(11.568, 7.500, Rotation2d.fromDegrees(-90.000));
 
@@ -99,5 +99,10 @@ public final class Constants {
     public static final String CAM_NAME = "limelight";
 
     public static final int FIDUCIAL_TRUST_THRESHOLD = 1;
+
+    /**
+     * Frames allowed without latency update before flagged as disconnected
+     */
+    public static final int DISCONNECTION_TIMEOUT = 5;
   }
 }

@@ -238,8 +238,8 @@ public class DriveCommands {
       Pose2d targetPose = target.get();
 
       return
-        Math.hypot(robotPose.getX() - targetPose.getX(), robotPose.getY() - targetPose.getY()) < kAutoAlign.TRANSLATION_TOLLERANCE.in(Meters) &&
-        Math.abs(drive.getRotation().getRadians() - targetPose.getRotation().getRadians()) < kAutoAlign.ROTATION_TOLLERANCE.in(Radians);
+        Math.hypot(robotPose.getX() - targetPose.getX(), robotPose.getY() - targetPose.getY()) < kAutoAlign.TRANSLATION_TOLERANCE.in(Meters) &&
+        Math.abs(drive.getRotation().getRadians() - targetPose.getRotation().getRadians()) < kAutoAlign.ROTATION_TOLERANCE.in(Radians);
     }).andThen(Commands.runOnce(drive::stop, drive));
   }
 
