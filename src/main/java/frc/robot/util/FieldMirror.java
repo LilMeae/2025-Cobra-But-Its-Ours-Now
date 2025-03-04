@@ -7,6 +7,9 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 public class FieldMirror {
+    
+    private FieldMirror() {}
+
     public static Pose2d mirrorPose(Pose2d pose) {
         return new Pose2d(new Translation2d(pose.getX(), FlippingUtil.fieldSizeY - pose.getY()), new Rotation2d(Math.PI * 2).minus(pose.getRotation()));
     }

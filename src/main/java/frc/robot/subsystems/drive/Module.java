@@ -15,6 +15,7 @@ package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.signals.MagnetHealthValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -23,6 +24,9 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import frc.robot.Constants;
+import frc.robot.Constants.Mode;
+
 import org.littletonrobotics.junction.Logger;
 
 public class Module {
@@ -34,6 +38,9 @@ public class Module {
   private final Alert driveDisconnectedAlert;
   private final Alert turnDisconnectedAlert;
   private final Alert turnEncoderDisconnectedAlert;
+  private final Alert turnEncoderOrangeAlert;
+  private final Alert turnEncoderRedAlert;
+
   private SwerveModulePosition[] odometryPositions = new SwerveModulePosition[] {};
 
   public Module(
@@ -43,16 +50,22 @@ public class Module {
     this.io = io;
     this.index = index;
     this.constants = constants;
-
+    
     driveDisconnectedAlert =
         new Alert(
-            "Disconnected drive motor on module " + Integer.toString(index) + ".", AlertType.kError);
+            "Disconnected drive motor on module " + index + ".", AlertType.kError);
     turnDisconnectedAlert =
         new Alert(
-            "Disconnected turn motor on module " + Integer.toString(index) + ".", AlertType.kError);
+            "Disconnected turn motor on module " + index + ".", AlertType.kError);
     turnEncoderDisconnectedAlert =
         new Alert(
-            "Disconnected turn encoder on module " + Integer.toString(index) + ".", AlertType.kError);
+            "Disconnected CANCoder on module " + index + ".", AlertType.kError);
+    turnEncoderOrangeAlert = 
+        new Alert(
+            "CANCoder Magnetic strip on module" + index + " is Orange", AlertType.kWarning);
+    turnEncoderRedAlert = 
+        new Alert(
+            "CANCoder Magnetic strip on module" + index + " is Red", AlertType.kError);
   }
 
   public void periodic() {
@@ -71,7 +84,13 @@ public class Module {
     // Update alerts
     driveDisconnectedAlert.set(!inputs.driveConnected);
     turnDisconnectedAlert.set(!inputs.turnConnected);
-    turnEncoderDisconnectedAlert.set(!inputs.turnEncoderConnected);
+    turnEncoderDisconnectedAlert.set(
+        (!inputs.turnEncoderConnected || inputs.magnetHealth == MagnetHealthValue.Magnet_Invalid)
+        &&
+        Constants.currentMode == Mode.REAL
+    );
+    turnEncoderOrangeAlert.set(inputs.magnetHealth == MagnetHealthValue.Magnet_Orange);
+    turnEncoderRedAlert.set(inputs.magnetHealth == MagnetHealthValue.Magnet_Red);
   }
 
   /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */

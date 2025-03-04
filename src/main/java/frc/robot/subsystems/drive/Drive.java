@@ -15,8 +15,10 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.io.IOException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import com.ctre.phoenix6.CANBus;
@@ -26,12 +28,11 @@ import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.pathfinding.Pathfinding;
+import com.pathplanner.lib.util.FlippingUtil;
 import com.pathplanner.lib.util.PathPlannerLogging;
-
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
-import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -41,8 +42,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -62,61 +61,53 @@ import frc.robot.util.DebugCommand;
 import frc.robot.util.LocalADStarAK;
 
 public class Drive extends SubsystemBase {
-  // TunerConstants doesn't include these constants, so they are declared locally
-  static final double ODOMETRY_FREQUENCY = new CANBus(TunerConstants.DrivetrainConstants.CANBusName).isNetworkFD()
-      ? 250.0
-      : 100.0;
-  public static final double DRIVE_BASE_RADIUS = Math.max(
-      Math.max(
-          Math.hypot(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
-          Math.hypot(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY)),
-      Math.max(
-          Math.hypot(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
-          Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)));
+    // TunerConstants doesn't include these constants, so they are declared locally
+    static final double ODOMETRY_FREQUENCY = new CANBus(TunerConstants.DrivetrainConstants.CANBusName).isNetworkFD()
+        ? 250.0
+        : 100.0;
+    public static final double DRIVE_BASE_RADIUS = Math.max(
+        Math.max(
+            Math.hypot(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
+            Math.hypot(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY)),
+        Math.max(
+            Math.hypot(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
+            Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)));
 
-  // PathPlanner config constants
-  private static final RobotConfig PP_CONFIG = new RobotConfig(
-      kDrive.ROBOT_FULL_MASS.in(Kilograms),
-      kDrive.ROBOT_MOI.in(KilogramSquareMeters),
-      new ModuleConfig(
-          TunerConstants.FrontLeft.WheelRadius,
-          TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
-          kDrive.WHEEL_COF,
-          DCMotor.getKrakenX60Foc(1)
-              .withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio),
-          TunerConstants.FrontLeft.SlipCurrent,
-          1),
-      getModuleTranslations());
+    private final RobotConfig PP_CONFIG;
 
-  static final Lock odometryLock = new ReentrantLock();
-  private final GyroIO gyroIO;
-  private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-  private final Module[] modules = new Module[4]; // FL, FR, BL, BR
-  private final SysIdRoutine sysId;
-  private final Alert gyroDisconnectedAlert = new Alert("Disconnected gyro, using kinematics as fallback.",
-      AlertType.kError);
+    protected static final Lock odometryLock = new ReentrantLock();
+    private final GyroIO gyroIO;
+    private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
+    private final Module[] modules = new Module[4]; // FL, FR, BL, BR
+    private final SysIdRoutine sysId;
 
-  private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
-  private Rotation2d rawGyroRotation = new Rotation2d();
-  private SwerveModulePosition[] lastModulePositions = // For delta tracking
-      new SwerveModulePosition[] {
-          new SwerveModulePosition(),
-          new SwerveModulePosition(),
-          new SwerveModulePosition(),
-          new SwerveModulePosition()
-      };
-  private SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(kinematics, rawGyroRotation,
-      lastModulePositions, new Pose2d());
+    private static Pose2d globalPose;
 
-  private final Vision vision;
+    // Alerts
+    private final Alert gyroDisconnectedAlert = new Alert("Disconnected gyro, using kinematics as fallback.",
+        AlertType.kError);
 
-  public Drive(
-      GyroIO gyroIO,
-      ModuleIO flModuleIO,
-      ModuleIO frModuleIO,
-      ModuleIO blModuleIO,
-      ModuleIO brModuleIO,
-      Vision vision) {
+    private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
+    private Rotation2d rawGyroRotation = new Rotation2d();
+    private SwerveModulePosition[] lastModulePositions = // For delta tracking
+        new SwerveModulePosition[] {
+            new SwerveModulePosition(),
+            new SwerveModulePosition(),
+            new SwerveModulePosition(),
+            new SwerveModulePosition()
+        };
+    private SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(kinematics, rawGyroRotation,
+        lastModulePositions, new Pose2d());
+
+    private final Vision vision;
+
+    public Drive(
+        GyroIO gyroIO,
+        ModuleIO flModuleIO,
+        ModuleIO frModuleIO,
+        ModuleIO blModuleIO,
+        ModuleIO brModuleIO,
+        Vision vision) {
     this.gyroIO = gyroIO;
     modules[0] = new Module(flModuleIO, 0, TunerConstants.FrontLeft);
     modules[1] = new Module(frModuleIO, 1, TunerConstants.FrontRight);
@@ -129,6 +120,27 @@ public class Drive extends SubsystemBase {
 
     // Start odometry thread
     PhoenixOdometryThread.getInstance().start();
+
+    RobotConfig config;
+    try {
+        config = RobotConfig.fromGUISettings();
+    } catch (IOException | ParseException e) {
+        System.out.println("Couldnt get RobotConfig from GUI... Defaulting to Constants");
+        config = new RobotConfig(
+            kDrive.ROBOT_FULL_MASS.in(Kilograms),
+            kDrive.ROBOT_MOI.in(KilogramSquareMeters),
+            new ModuleConfig(
+                TunerConstants.FrontLeft.WheelRadius,
+                TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
+                kDrive.WHEEL_COF,
+                DCMotor.getKrakenX60Foc(1)
+                    .withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio),
+                TunerConstants.FrontLeft.SlipCurrent,
+                1),
+            getModuleTranslations());
+    }
+
+    PP_CONFIG = config;
 
     // Configure AutoBuilder for PathPlanner
     AutoBuilder.configure(
@@ -187,6 +199,8 @@ public class Drive extends SubsystemBase {
         module.stop();
       }
     }
+
+    globalPose = getBlueSidePose();
 
     // Log empty setpoint states when disabled
     if (DriverStation.isDisabled()) {
@@ -262,6 +276,12 @@ public class Drive extends SubsystemBase {
     }
   }
 
+  public void pointWheelsToward(Rotation2d angle) {
+    for (int i = 0; i < 4; i++) {
+        modules[i].runSetpoint(new SwerveModuleState(0, angle));
+    }
+  }
+
   /** Stops the drive. */
   public void stop() {
     runVelocity(new ChassisSpeeds());
@@ -294,6 +314,10 @@ public class Drive extends SubsystemBase {
       module.driveNeutralMode(NeutralModeValue.Brake);
       module.turnNeutralMode(NeutralModeValue.Brake);
     }
+  }
+
+  public static boolean isSafe() {
+    return globalPose.getTranslation().getDistance(new Translation2d(4.48945, FlippingUtil.fieldSizeY / 2.0)) >= 1.45;
   }
 
   /** Returns a command to run a quasistatic test in the specified direction. */
@@ -378,6 +402,14 @@ public class Drive extends SubsystemBase {
     return poseEstimator.getEstimatedPosition();
   }
 
+  /** Gets the robots position on the blue side (if on red converts to blue) */
+  public Pose2d getBlueSidePose() {
+    if (AutoBuilder.shouldFlip())
+        return FlippingUtil.flipFieldPose(getPose());
+    else
+        return getPose();
+  }
+
   /** Returns the current odometry rotation. */
   public Rotation2d getRotation() {
     return getPose().getRotation();
@@ -391,10 +423,9 @@ public class Drive extends SubsystemBase {
   /** Adds a new timestamped vision measurement. */
   public void addVisionMeasurement(
       Pose2d visionRobotPoseMeters,
-      double timestampSeconds,
-      Matrix<N3, N1> visionMeasurementStdDevs) {
+      double timestampSeconds) {
     poseEstimator.addVisionMeasurement(
-        visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
+        visionRobotPoseMeters, timestampSeconds);
   }
 
   /** Returns the maximum linear speed in meters per sec. */

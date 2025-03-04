@@ -10,6 +10,8 @@ import java.util.function.Supplier;
 public final class StructHelper {
   private static final ArrayList<Pair<StructPublisher<?>, Supplier<?>>> VALUES = new ArrayList<>();
 
+  private StructHelper() {}
+
   /**
    * Publishs and updates a Struct object to NT ({@link NetworkTableInstance#getDefault()}).
    *

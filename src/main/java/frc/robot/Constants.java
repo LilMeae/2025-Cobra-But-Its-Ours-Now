@@ -16,26 +16,36 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
 import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.MomentOfInertia;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.commands.AutoCommands.kReefPosition;
+import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.FieldMirror;
 
 /**
- * This class defines the runtime mode used by AdvantageKit. The mode is always
- * "real" when running
- * on a roboRIO. Change the value of "simMode" to switch between "sim" (physics
- * sim) and "replay"
+ * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
+ * on a roboRIO. Change the value of "simMode" to switch between "sim" (physics sim) and "replay"
  * (log replay from a file).
  */
+
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
@@ -52,13 +62,12 @@ public final class Constants {
   }
 
   public static final class kDrive {
-    public static final Mass ROBOT_FULL_MASS = Pounds.of(125.0);
-    public static final MomentOfInertia ROBOT_MOI = KilogramSquareMeters.of(9.2437679288);
-    public static final double WHEEL_COF = 1.2;
+    public static final Mass ROBOT_FULL_MASS = Kilograms.of(60.27789);
+    public static final MomentOfInertia ROBOT_MOI = KilogramSquareMeters.of(2.881);
+    public static final double WHEEL_COF = 1.916;
   }
 
   public static final class kAuto {
-    /** @throws IllegalArgumentException If this the auto command is ran twice */
     public static final boolean PRINT_AUTO_TIME = false;
 
     /** When this is true the robot will set it's position where the path starts when the auto is selected. */
@@ -69,30 +78,158 @@ public final class Constants {
   }
 
   public static final class kAutoAlign {
-    public static final PIDConstants ALIGN_PID = new PIDConstants(12.0, 0.0, 0.5);
+    public static final PIDConstants ALIGN_PID = new PIDConstants(4.7, 0.0, 0.12);
 
-    public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY     = MetersPerSecond         .of(3.5);
-    public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION = MetersPerSecondPerSecond.of(8.0);
+    public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY     = MetersPerSecond         .of(1.90);
+    public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION = MetersPerSecondPerSecond.of(6.0);
 
-    public static final Distance TRANSLATION_TOLERANCE = Centimeters.of(2.0);
-    public static final Angle    ROTATION_TOLERANCE    = Degrees    .of(1.0);
+    public static final Distance TRANSLATION_TOLLERANCE = Centimeters.of(2.5);
+    public static final Angle    ROTATION_TOLLERANCE    = Degrees    .of(1.5);
+
+    public static final PathConstraints PATH_FIND_CONSTRAINTS = new PathConstraints(
+        TunerConstants.kSpeedAt12Volts,
+        MAX_AUTO_ALIGN_ACCELERATION,
+        RadiansPerSecond.of(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond) / Drive.DRIVE_BASE_RADIUS),
+        DegreesPerSecondPerSecond.of(720.0)
+    );
 
     public static final Pose2d PROCESSOR_TARGET = new Pose2d(11.568, 7.500, Rotation2d.fromDegrees(-90.000));
 
+    public static final Time VELOCITY_TIME_ADJUSTEDMENT = Milliseconds.of(5000);
+    public static final int  TIME_ADJUSTMENT_TIMEOUT = 10;
+
     public static final class kReef {
-      public static final HashMap<String, Pose2d> TARGETS = new HashMap<>();
+      public static final Transform2d LEFT_OFFSET_TO_BRANCH  = new Transform2d(0.35, 0.18, new Rotation2d());
+      public static final Transform2d RIGHT_OFFSET_TO_BRANCH = new Transform2d(0.35, -0.18, new Rotation2d());
+
+      private static final Pose2d generatePose(Rotation2d rotation) {
+        final double mx = 4.48945;
+        final double my = FlippingUtil.fieldSizeY / 2.0;
+        final double r = 1.64;
+
+        return new Pose2d(r * -rotation.getCos() + mx, r * -rotation.getSin() + my, rotation);
+      } 
+
+      public static final HashMap<kReefPosition, Pose2d> TARGETS = new HashMap<>();
       static {
-        TARGETS.put("BL", new Pose2d(3.668, 5.428, Rotation2d.fromDegrees(-60.000)));
-        TARGETS.put("FL", new Pose2d(5.335, 5.392, Rotation2d.fromDegrees(-120.000)));
-        TARGETS.put("F", new Pose2d(6.150, 4.026, Rotation2d.fromDegrees(180.000)));
-        TARGETS.put("B", new Pose2d(2.850, 4.026, Rotation2d.fromDegrees(0.000)));
-        TARGETS.put("BR", FieldMirror.mirrorPose(TARGETS.get("BL")));
-        TARGETS.put("FR", FieldMirror.mirrorPose(TARGETS.get("FL")));
+        TARGETS.put(kReefPosition.CLOSE_LEFT,   generatePose(Rotation2d.fromDegrees(-60.000)));
+        TARGETS.put(kReefPosition.FAR_LEFT,     generatePose(Rotation2d.fromDegrees(-120.000)));
+        TARGETS.put(kReefPosition.FAR,          generatePose(Rotation2d.fromDegrees(180.000)));
+        TARGETS.put(kReefPosition.CLOSE,        generatePose(Rotation2d.fromDegrees(0.000)));
+        
+        TARGETS.put(kReefPosition.CLOSE_RIGHT,  FieldMirror.mirrorPose(TARGETS.get(kReefPosition.CLOSE_LEFT)));
+        TARGETS.put(kReefPosition.FAR_RIGHT,    FieldMirror.mirrorPose(TARGETS.get(kReefPosition.FAR_LEFT)));
       }
 
-      public static final Transform2d LEFT_OFFSET_TO_BRANCH = new Transform2d(0.315, 0.167, new Rotation2d());
-      public static final Transform2d RIGHT_OFFSET_TO_BRANCH = new Transform2d(0.315, -0.167, new Rotation2d());
+      public static final HashMap<Pose2d, ScoringLevel> ALGAE_HEIGHTS = new HashMap<>();
+      static {
+        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.CLOSE_LEFT ), ScoringLevel.LEVEL2_ALGAE);
+        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.CLOSE      ), ScoringLevel.LEVEL3_ALGAE);
+        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.CLOSE_RIGHT), ScoringLevel.LEVEL2_ALGAE);
+        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.FAR_RIGHT  ), ScoringLevel.LEVEL3_ALGAE);
+        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.FAR        ), ScoringLevel.LEVEL2_ALGAE);
+        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.FAR_LEFT   ), ScoringLevel.LEVEL3_ALGAE);
+      }
+
+      public static final HashMap<String, Pose2d> BRANCHES = new HashMap<>();
+      static {
+        for (Entry<kReefPosition, Pose2d> entry : TARGETS.entrySet()) {
+            BRANCHES.put(entry.getKey().name() + ".L", entry.getValue().transformBy( LEFT_OFFSET_TO_BRANCH));
+            BRANCHES.put(entry.getKey().name() + ".R", entry.getValue().transformBy(RIGHT_OFFSET_TO_BRANCH));
+        }
+      }
     }
+
+    public static final class kStation {
+        private static final Distance DISTANCE_RAMPS = Inches .of( 8.000);
+        private static final Angle    STATION_ANGLE  = Degrees.of(-54.000);
+
+        public static final Pose2d LEFT_STATION  = new Pose2d(1.498, 7.274, Rotation2d.fromDegrees(STATION_ANGLE.in(Degrees)));
+        public static final Pose2d RIGHT_STATION = FieldMirror.mirrorPose(LEFT_STATION);
+
+        public static final Transform2d STATIONS_OFFSET = new Transform2d(
+            0.0,
+            -DISTANCE_RAMPS.in(Meters),
+            new Rotation2d()
+        );
+    }
+  }
+
+  public static final class kArmPivot {
+    public static final int FALCON_ID = 22;
+    public static final int CANCODER_ID = 24;
+
+    public static final double MAGNET_SENSOR_OFFSET = -0.344727;
+
+    public static final double kP = 150.0;
+    public static final double kI = 0.0;
+    public static final double kD = 0.0;
+    public static final double kG = 0.025 * 12.0;
+
+    public static final double   ARM_GEARING      = (72/22) * 4*9;
+    public static final Distance ARM_DRUM_RADIUS  = Inches.of(0.944);
+    public static final MomentOfInertia ARM_MOI   = KilogramSquareMeters.of(0.724982551);
+    public static final Distance ARM_LENGTH       = Inches.of(12.0);
+    public static final Mass     ARM_MASS         = Pounds.of(8.75);
+
+    public static final Angle minAngles = Degrees.of(-90);
+    public static final Angle maxAngles = Degrees.of(120);
+
+    public static final Angle MOVEMENT_SETPOINT = Degrees.of(88);
+    public static final Angle PICKUP_ANGLE  = Degrees.of(105);
+
+    public static final PIDConstants SIMULATED_PID_VALUES = new PIDConstants(3.75, 0.0, 0.2);
+  }
+
+    public static enum ScoringLevel {
+        LEVEL1(      Meters.of(0.030), Degrees.of(100.)),
+        LEVEL2(      Meters.of(0.160), Degrees.of(83.0)),
+        LEVEL3(      Meters.of(0.360), Degrees.of(83.0)),
+        LEVEL4(      Meters.of(0.665), Degrees.of(92.0)),
+        LEVEL2_ALGAE(Meters.of(0.230), Degrees.of(73.5)),
+        LEVEL3_ALGAE(Meters.of(0.430), Degrees.of(73.5)),
+        /** Not Implemented */
+        BARGE(       Meters.of(0.650), Degrees.of(100.)),
+        /** Not Implemented */
+        PROCESSOR(   Meters.of(0.050), Degrees.of(80.0));
+
+        public final Distance elevatorSetpoint;
+        public final Angle pivotAngle;
+
+        private ScoringLevel(Distance elevatorSetpoint, Angle pivotAngle) {
+            this.elevatorSetpoint = elevatorSetpoint;
+            this.pivotAngle = pivotAngle;
+        }
+    }
+
+  public static final class kEndEffector {
+      public static final int ENDEFFECTOR_MOTOR_ID = 23;
+      public static final int CURRENT_LIMIT = 40;
+      public static final int TIMOFFLIGHT_SENSORID = 28;
+      public static final Distance TIMEOFFLIGHT_DISTANCE_VALIDATION = Millimeters.of(110);
+
+      public static final double IDLE_VOLTAGE  =  3.5;
+      public static final double SCORE_VOLTAGE =  7.9;
+      public static final double ALGAE_VOLTAGE = -4.0;
+  }
+
+  public static final class kElevator {
+    public static final int MAIN_MOTOR_ID = 20;
+    public static final int FOLLOWER_MOTOR_ID = 21;
+    public static final double CURRENT_LIMIT = 30.0;
+    public static final double kGearing = 12.0/1.0;
+    public static final Distance ELEVATOR_DRUMRADIUS = Inches.of(1.751/2.0);
+    public static final double kCircumfrence = 2 * Math.PI * ELEVATOR_DRUMRADIUS.in(Meters);
+    public static final double kRotationConverter = kCircumfrence / kGearing;
+    public static final PIDConstants TALONFX_PID = new PIDConstants(100, 0, 0);
+    public static final PIDConstants SIM_PID = new PIDConstants(10, 0, 0);
+    public static final Mass ELEVATOR_MASS = Pound.of(52.95);
+    public static final double ELEVATOR_MIN_HEIGHT = 0.0;
+    public static final double ELEVATOR_MAX_HEIGHT = 0.652587890625;
+
+    public static final Distance ELEVATOR_PREP_HEIGHT = Meters.of(0.30);
+
+    public static final Distance IDLING_HEIGHT = Meters.of(0.024);
   }
 
   public static final class kVision {
@@ -104,5 +241,11 @@ public final class Constants {
      * Frames allowed without latency update before flagged as disconnected
      */
     public static final int DISCONNECTION_TIMEOUT = 5;
+
+    public static final int THROTTLE_DISABLED = 200;
+
+    public static final Transform3d OFFSET_FROM_ROBOT_ORIGIN = new Transform3d(
+                                                                        new Translation3d(0.1322, -0.2170, 0.3804),
+                                                                        new Rotation3d(   0,  0,   Units.degreesToRadians(-20)));
   }
 }

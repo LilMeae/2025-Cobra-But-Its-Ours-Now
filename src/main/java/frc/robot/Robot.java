@@ -13,13 +13,9 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.*;
-
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.DriveMotorArrangement;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants.SteerMotorArrangement;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -28,12 +24,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants.kAuto;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.vision.VisionIOLimelight;
-import frc.robot.util.PieceVisualizer;
 import frc.robot.util.StructHelper;
+import frc.robot.Constants.Mode;
+import frc.robot.Constants.kEndEffector;
+import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -50,6 +47,8 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 public class Robot extends LoggedRobot {
   private Command autonomousCommand;
   private RobotContainer robotContainer;
+
+  private double matchTime = -1;
 
   private final Alert autoStartingConfigAlert = new Alert("Auto Pose Mismatch!", AlertType.kWarning);
 
@@ -118,6 +117,20 @@ public class Robot extends LoggedRobot {
     robotContainer = new RobotContainer();
 
     VisionIOLimelight.forwardLimelightPorts();
+
+    new Trigger(DriverStation::isDisabled)
+        .onTrue(
+            Commands.parallel(
+                robotContainer.sys_armPivot.setVoltage(0.0).ignoringDisable(true),
+                robotContainer.sys_elevator.startManualMove(0.0).ignoringDisable(true),
+                robotContainer.sys_endEffector.setVoltage(0.0).ignoringDisable(true)
+            ).ignoringDisable(true)
+        );
+
+    new Trigger(() -> matchTime <= 0.25)
+        .and(() -> matchTime != -1.0)
+        .and(DriverStation::isTeleopEnabled)
+        .onTrue(robotContainer.sys_endEffector.setVoltage(kEndEffector.SCORE_VOLTAGE));
   }
 
   /** This function is called periodically during all modes. */
@@ -136,9 +149,11 @@ public class Robot extends LoggedRobot {
     // Return to normal thread priority
     Threads.setCurrentThreadPriority(false, 10);
 
-    SmartDashboard.putNumber("Time", DriverStation.getMatchTime());
+    matchTime = DriverStation.getMatchTime();
+    SmartDashboard.putNumber("Time", matchTime);
 
     StructHelper.update();
+    robotContainer.updateScoringPosition();
   }
 
   /** This function is called once when the robot is disabled. */
@@ -154,22 +169,21 @@ public class Robot extends LoggedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    Command baseAutoCommand = robotContainer.getAutonomousCommand();
+    CommandScheduler.getInstance().clearComposedCommands();
 
-    if (baseAutoCommand == null) return;
+    Command autoCommand = robotContainer.getAutonomousCommand();
 
-    if (kAuto.PRINT_AUTO_TIME) {
-      long startTime = System.currentTimeMillis();
-      autonomousCommand = Commands.sequence(
-        baseAutoCommand,
-        Commands.runOnce(
-          () -> System.out.println("Auto Command took: " + (System.currentTimeMillis() - startTime - 20) / 1000f + " Seconds!")
-        )
-      );
-    } else 
-      autonomousCommand = baseAutoCommand;
+    if (autoCommand == null) return;
     
-    autonomousCommand.schedule();
+    autoCommand.schedule();
+
+    RobotContainer.isTelopAuto = robotContainer.runTelop.get();
+    autoStartingConfigAlert.set(false);
+
+    if (Constants.currentMode == Mode.SIM)
+        SimulatedArena.getInstance().resetFieldForAuto();
+
+    // robotContainer.sys_drive.brakeMode();
   }
 
   /** This function is called periodically during autonomous. */
@@ -179,13 +193,23 @@ public class Robot extends LoggedRobot {
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
+    CommandScheduler.getInstance().clearComposedCommands();
+
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
+
     if (autonomousCommand != null) {
-      autonomousCommand.cancel();
+        autonomousCommand.cancel();
     }
+
+    if (robotContainer.runTelop.get())
+        robotContainer.telopAutoCommand.schedule();
+
+    autoStartingConfigAlert.set(false);
+
+    robotContainer.sys_drive.brakeMode();
   }
 
   /** This function is called periodically during operator control. */
@@ -205,18 +229,11 @@ public class Robot extends LoggedRobot {
 
   /** This function is called once when the robot is first started up. */
   @Override
-  public void simulationInit() {
-    final Drive drive = robotContainer.sys_drive;
-
-    PieceVisualizer.configure(() -> drive.getPose());
-    
-    // EXAMPLE GAME PIECE
-    PieceVisualizer.addGamePiece(() -> new Transform3d(Meters.of(0.0), Meters.of(0.0), Meters.of(0.5), new Rotation3d()));
-  }
+  public void simulationInit() {}
 
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
-    PieceVisualizer.update();
+    robotContainer.updateSim();
   }
 }

@@ -54,4 +54,7 @@ public interface VisionIO {
     default PoseEstimate estimatePose(Drive drive) {
         return new PoseEstimate();
     }
+
+    /** Code to run periodically in simulation mode */
+    default void simulationPeriodic() {}
 }
