@@ -74,7 +74,8 @@ public class OpponentRobot extends SubsystemBase {
 
             final ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                     joystickSpeeds,
-                    driveSimulation.getActualPoseInSimulationWorld().getRotation().plus(Rotation2d.k180deg)
+                    driveSimulation.getActualPoseInSimulationWorld().getRotation()
+                    // .plus(Rotation2d.k180deg)
             );
 
             driveSimulation.runChassisSpeeds(fieldRelativeSpeeds, new Translation2d(), true, true);
