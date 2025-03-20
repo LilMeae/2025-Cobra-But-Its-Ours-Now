@@ -47,6 +47,8 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -82,6 +84,7 @@ public class Drive extends SubsystemBase {
     private final SysIdRoutine sysId;
 
     private static Pose2d globalPose;
+    private final Field2d field2d;
 
     // Alerts
     private final Alert gyroDisconnectedAlert = new Alert("Disconnected gyro, using kinematics as fallback.",
@@ -174,6 +177,9 @@ public class Drive extends SubsystemBase {
         new SysIdRoutine.Mechanism(
             (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
 
+    field2d = new Field2d();
+    SmartDashboard.putData("Robot Field", field2d);
+
     // Register Debug Commands
     DebugCommand.register("Drive-X", Commands.runOnce(this::stopWithX, this));
 
@@ -191,6 +197,7 @@ public class Drive extends SubsystemBase {
     for (var module : modules) {
       module.periodic();
     }
+    field2d.setRobotPose(getPose());
     odometryLock.unlock();
 
     // Stop moving when disabled

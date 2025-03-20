@@ -2,6 +2,7 @@ package frc.robot.subsystems.collector;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 import edu.wpi.first.wpilibj.Alert;
@@ -22,6 +23,7 @@ public class EndEffector extends SubsystemBase {
     private final EndEffectorInputsAutoLogged inputs = new EndEffectorInputsAutoLogged();
 
     private final LoggedNetworkNumber tofRange;
+    private final LoggedNetworkNumber voltageOffset;
 
     private int timer = 0;
 
@@ -31,6 +33,7 @@ public class EndEffector extends SubsystemBase {
         this.io = io;
 
         tofRange = new LoggedNetworkNumber("ToF Range", kEndEffector.TIMEOFFLIGHT_DISTANCE_VALIDATION.in(Millimeters));
+        voltageOffset = new LoggedNetworkNumber("Voltage offset", 0.0);
 
         DebugCommand.register("EndEffector Run Forward", setVoltage(3));
         DebugCommand.register("EndEffector Run Backwards", setVoltage(-3));
@@ -92,7 +95,7 @@ public class EndEffector extends SubsystemBase {
             );
         else
             return Commands.repeatingSequence(
-                setVoltage(voltage),
+                setVoltage(() -> voltage - voltageOffset.get()),
                 new WaitThen(
                     0.2,
                     Commands.waitUntil(() -> io.getMotorCurrent() >= kEndEffector.CURRENT_LIMIT - 3)
@@ -103,6 +106,13 @@ public class EndEffector extends SubsystemBase {
                 Commands.waitSeconds(0.25)
             ).onlyWhile(this::coralDetected)
             .finallyDo(() -> io.setVoltage(0.0));
+    }
+
+    public Command setVoltage(DoubleSupplier voltageSupplier) {
+        return Commands.runOnce(
+            () -> io.setVoltage(voltageSupplier.getAsDouble()),
+            this
+        );
     }
 
     public Command setVoltage(double voltage){

@@ -1,0 +1,264 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "IC to FL"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "PREP_ELEVATOR"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "SCORE_RIGHT_L4"
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "FL to LP"
+                      }
+                    },
+                    {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 0.05
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "DRIVE_FORWARD"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "END_WHEN_COLLECTED"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "LP to BL"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "IDLE"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "PREP_ELEVATOR"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "SCORE_LEFT_L4"
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "BL to LP"
+                      }
+                    },
+                    {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 0.05
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "DRIVE_FORWARD"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "END_WHEN_COLLECTED"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "LP to BL"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "IDLE"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "PREP_ELEVATOR"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "SCORE_RIGHT_L4"
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "BL to LP"
+                      }
+                    },
+                    {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 0.05
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "DRIVE_FORWARD"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "END_WHEN_COLLECTED"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "LP to B"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "IDLE"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "SCORE_LEFT_L2"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "AUTO_END"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "BACKOFF"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "IDLE"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}
