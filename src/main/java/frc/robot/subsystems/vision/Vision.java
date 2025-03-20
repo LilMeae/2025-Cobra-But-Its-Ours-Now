@@ -1,6 +1,8 @@
 package frc.robot.subsystems.vision;
 
 import org.littletonrobotics.junction.Logger;
+
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 
@@ -10,8 +12,8 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.kVision;
-import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.LimelightHelpers.PoseEstimate;
 
 public class Vision extends SubsystemBase {
 
@@ -53,6 +55,14 @@ public class Vision extends SubsystemBase {
             return;
 
         drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds);
+    }
+
+    public void setRotation(Rotation2d rotation) {
+        io.setRotation(rotation);
+    }
+
+    public boolean hasTarget() {
+        return inputs.hasTarget;
     }
 
     @Override

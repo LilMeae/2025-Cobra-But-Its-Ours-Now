@@ -1,7 +1,6 @@
 package frc.robot.commands.scoring;
 
 import java.util.function.BooleanSupplier;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants.ScoringLevel;
@@ -17,8 +16,16 @@ public class ScoreCommand extends SequentialCommandGroup {
             sys_elevator.elevatorGo(level.elevatorSetpoint),
             sys_pivot.moveArm(level.pivotAngle),
             Commands.waitUntil(scoring),
-            Commands.waitSeconds(0.1).onlyIf(DriverStation::isTeleopEnabled),
+            // Commands.waitSeconds(0.1).onlyIf(DriverStation::isTeleopEnabled),
             sys_score.runUntilCoralNotDetected(level.voltage)
+        );
+    }
+
+    public ScoreCommand(Elevator sys_elevator, ArmPivot sys_pivot, ScoringLevel level) {
+        super(
+            sys_pivot.moveArm(kArmPivot.MOVEMENT_SETPOINT),
+            sys_elevator.elevatorGo(level.elevatorSetpoint),
+            sys_pivot.moveArm(level.pivotAngle)
         );
     }
 }

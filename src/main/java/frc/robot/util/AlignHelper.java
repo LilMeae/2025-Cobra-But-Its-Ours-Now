@@ -82,10 +82,10 @@ public class AlignHelper {
         List<Pose2d> poses = new ArrayList<>();
         for (int i = -1; i < 4; i++) {
             if (station == kDirection.LEFT  || station == kDirection.BOTH)
-                poses.add(kStation.LEFT_STATION .transformBy(kStation.STATIONS_OFFSET.times( i)).transformBy(FieldFactors.LEFT_STATION .getTransform()));
+                poses.add(kStation.LEFT_STATION .transformBy(kStation.STATIONS_OFFSET.times( i)));
             
             if (station == kDirection.RIGHT || station == kDirection.BOTH)
-                poses.add(kStation.RIGHT_STATION.transformBy(kStation.STATIONS_OFFSET.times(-i)).transformBy(FieldFactors.RIGHT_STATION.getTransform()));
+                poses.add(kStation.RIGHT_STATION.transformBy(kStation.STATIONS_OFFSET.times(-i)));
         }
 
         return poses;

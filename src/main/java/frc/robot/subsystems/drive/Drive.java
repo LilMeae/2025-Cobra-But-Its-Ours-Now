@@ -276,6 +276,12 @@ public class Drive extends SubsystemBase {
     }
   }
 
+  public void driveForward(double speedMetersPerSecond) {
+    for (int i = 0; i < 4; i++) {
+        modules[i].runSetpoint(new SwerveModuleState(speedMetersPerSecond, new Rotation2d()));
+    }
+  }
+
   public void pointWheelsToward(Rotation2d angle) {
     for (int i = 0; i < 4; i++) {
         modules[i].runSetpoint(new SwerveModuleState(0, angle));
@@ -418,6 +424,7 @@ public class Drive extends SubsystemBase {
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
     poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
+    vision.setRotation(pose.getRotation());
   }
 
   /** Adds a new timestamped vision measurement. */

@@ -30,7 +30,7 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.util.StructHelper;
 import frc.robot.Constants.Mode;
-import frc.robot.Constants.kEndEffector;
+import frc.robot.Constants.ScoringLevel;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -133,7 +133,7 @@ public class Robot extends LoggedRobot {
     new Trigger(() -> matchTime <= 0.25)
         .and(() -> matchTime != -1.0)
         .and(DriverStation::isTeleopEnabled)
-        .onTrue(robotContainer.sys_endEffector.setVoltage(kEndEffector.SCORE_VOLTAGE));
+        .onTrue(robotContainer.sys_endEffector.setVoltage(ScoringLevel.LEVEL4.voltage));
   }
 
   /** This function is called periodically during all modes. */
@@ -180,7 +180,7 @@ public class Robot extends LoggedRobot {
     
     autoCommand.schedule();
 
-    RobotContainer.isTelopAuto = robotContainer.runTelop.get();
+    RobotContainer.isTelopAuto = robotContainer.runTelop.getAsBoolean();
     autoStartingConfigAlert.set(false);
 
     if (Constants.currentMode == Mode.SIM)
@@ -207,7 +207,7 @@ public class Robot extends LoggedRobot {
         autonomousCommand.cancel();
     }
 
-    if (robotContainer.runTelop.get())
+    if (robotContainer.runTelop.getAsBoolean())
         robotContainer.telopAutoCommand.schedule();
 
     autoStartingConfigAlert.set(false);
@@ -237,6 +237,7 @@ public class Robot extends LoggedRobot {
   /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {
-    robotContainer.updateSim();
+    if (Constants.simMode == Mode.SIM)
+        robotContainer.updateSim();
   }
 }

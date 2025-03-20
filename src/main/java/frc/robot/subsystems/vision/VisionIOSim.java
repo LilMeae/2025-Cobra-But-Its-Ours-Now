@@ -3,7 +3,6 @@ package frc.robot.subsystems.vision;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.EstimatedRobotPose;
@@ -14,7 +13,6 @@ import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -23,9 +21,9 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
-import frc.robot.LimelightHelpers.PoseEstimate;
-import frc.robot.LimelightHelpers.RawFiducial;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.LimelightHelpers.PoseEstimate;
+import frc.robot.util.LimelightHelpers.RawFiducial;
 
 public class VisionIOSim implements VisionIO {
     private final SwerveDriveSimulation sim_drive;
@@ -34,6 +32,8 @@ public class VisionIOSim implements VisionIO {
     private final PhotonCamera cam;
 
     private Optional<Pose3d> prevEstPose = Optional.empty();
+
+    private boolean hasTarget = false;
 
     private static volatile VisionIOSim globalThis = null;
 
@@ -74,6 +74,7 @@ public class VisionIOSim implements VisionIO {
         inputs.isConnected = true;
         inputs.fps         = 20;
         inputs.prxLatency  = 35;
+        inputs.hasTarget = hasTarget;
     }
 
     @Override
@@ -84,7 +85,12 @@ public class VisionIOSim implements VisionIO {
         if (results.isEmpty()) return null;
         Optional<EstimatedRobotPose> pe = poseEstimator.update(results.get(results.size() - 1));
 
-        if (!pe.isPresent()) return null;
+        if (!pe.isPresent()) {
+            hasTarget = false;
+            return null;
+        }
+
+        hasTarget = true;
 
         prevEstPose = Optional.of(pe.get().estimatedPose);
 

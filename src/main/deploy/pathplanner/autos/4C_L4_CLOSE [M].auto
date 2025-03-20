@@ -5,7 +5,7 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "deadline",
           "data": {
             "commands": [
               {
@@ -17,29 +17,16 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "PREP ELEVATOR"
+                  "name": "PREP_ELEVATOR"
                 }
               }
             ]
           }
         },
         {
-          "type": "parallel",
+          "type": "named",
           "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "ALIGN_RIGHT"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "L4"
-                }
-              }
-            ]
+            "name": "SCORE_RIGHT_L4"
           }
         },
         {
@@ -57,9 +44,21 @@
                       }
                     },
                     {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 0.05
+                      }
+                    },
+                    {
                       "type": "named",
                       "data": {
-                        "name": "END WHEN COLLECTED"
+                        "name": "DRIVE_FORWARD"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "END_WHEN_COLLECTED"
                       }
                     },
                     {
@@ -84,7 +83,7 @@
                     {
                       "type": "named",
                       "data": {
-                        "name": "PREP ELEVATOR"
+                        "name": "PREP_ELEVATOR"
                       }
                     }
                   ]
@@ -94,22 +93,9 @@
           }
         },
         {
-          "type": "parallel",
+          "type": "named",
           "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "ALIGN_LEFT"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "L4"
-                }
-              }
-            ]
+            "name": "SCORE_LEFT_L4"
           }
         },
         {
@@ -127,9 +113,21 @@
                       }
                     },
                     {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 0.05
+                      }
+                    },
+                    {
                       "type": "named",
                       "data": {
-                        "name": "END WHEN COLLECTED"
+                        "name": "DRIVE_FORWARD"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "END_WHEN_COLLECTED"
                       }
                     },
                     {
@@ -154,7 +152,7 @@
                     {
                       "type": "named",
                       "data": {
-                        "name": "PREP ELEVATOR"
+                        "name": "PREP_ELEVATOR"
                       }
                     }
                   ]
@@ -164,22 +162,9 @@
           }
         },
         {
-          "type": "parallel",
+          "type": "named",
           "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "ALIGN_RIGHT"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "L4"
-                }
-              }
-            ]
+            "name": "SCORE_RIGHT_L4"
           }
         },
         {
@@ -197,9 +182,21 @@
                       }
                     },
                     {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 0.05
+                      }
+                    },
+                    {
                       "type": "named",
                       "data": {
-                        "name": "END WHEN COLLECTED"
+                        "name": "DRIVE_FORWARD"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "END_WHEN_COLLECTED"
                       }
                     },
                     {
@@ -224,7 +221,7 @@
                     {
                       "type": "named",
                       "data": {
-                        "name": "PREP ELEVATOR"
+                        "name": "PREP_ELEVATOR"
                       }
                     }
                   ]
@@ -234,34 +231,40 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "SCORE_LEFT_L4"
+          }
+        },
+        {
           "type": "parallel",
           "data": {
             "commands": [
               {
                 "type": "named",
                 "data": {
-                  "name": "ALIGN_LEFT"
+                  "name": "AUTO_END"
                 }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "L4"
+                  "name": "BACKOFF"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "IDLE"
                 }
               }
             ]
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "BACKOFF"
           }
         }
       ]
     }
   },
-  "resetOdom": false,
+  "resetOdom": true,
   "folder": null,
   "choreoAuto": false
 }

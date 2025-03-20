@@ -17,7 +17,6 @@ import static edu.wpi.first.units.Units.*;
 
 import java.io.IOException;
 import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -33,6 +32,8 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Alert;
@@ -41,7 +42,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -52,6 +52,7 @@ import frc.robot.Constants.Mode;
 import frc.robot.Constants.ScoringLevel;
 import frc.robot.Constants.kArmPivot;
 import frc.robot.Constants.kAuto;
+import frc.robot.Constants.kAutoAlign;
 import frc.robot.Constants.kDrive;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
@@ -116,7 +117,7 @@ public class RobotContainer {
     // Commands
     protected final Command telopAutoCommand;
   
-    private ScoringLevel selectedScoringLevel = ScoringLevel.LEVEL3;
+    private ScoringLevel selectedScoringLevel = ScoringLevel.LEVEL4;
 
     // Controller
     private final CommandXboxController primaryController   = new CommandXboxController(0);
@@ -133,7 +134,7 @@ public class RobotContainer {
 
     // Dashboard inputs
     protected final LoggedDashboardChooser<Command> autoChooser;
-    protected final Supplier<Boolean> runTelop;
+    protected final BooleanSupplier runTelop;
 
     // Alerts
     private final Alert primaryDisconnectedAlert = new Alert(
@@ -145,6 +146,16 @@ public class RobotContainer {
     // private final Alert controlDisconnectedAlert = new Alert(
     //         "Control Board Disconnected!",
     //         AlertType.kError);
+
+    private final Alert leftTriggerAlert = new Alert(
+        "Left Trigger never tested!",
+        AlertType.kWarning
+    );
+
+    private final Alert rightTriggerAlert = new Alert(
+        "Right Trigger never tested!",
+        AlertType.kWarning
+    );
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -234,6 +245,9 @@ public class RobotContainer {
         AutoCommands.setupNodeChooser();
         registerCommands();
 
+        leftTriggerAlert.set(true);
+        rightTriggerAlert.set(true);
+
         // Commands
         telopAutoCommand = AutoCommands.telopAutoCommand(
             sys_drive,
@@ -259,58 +273,50 @@ public class RobotContainer {
             }
         }
 
-        // Set up SysId routines
-        autoChooser.addOption(
-                "Drive Wheel Radius Characterization",
-                DriveCommands.wheelRadiusCharacterization(sys_drive));
-        autoChooser.addOption(
-                "Drive Simple FF Characterization",
-                DriveCommands.feedforwardCharacterization(sys_drive));
-        autoChooser.addOption(
-                "Drive SysId (Quasistatic Forward)",
-                sys_drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Drive SysId (Quasistatic Reverse)",
-                sys_drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption(
-                "Drive SysId (Dynamic Forward)",
-                sys_drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Drive SysId (Dynamic Reverse)",
-                sys_drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        if (Constants.TUNNING) {
+            // Set up SysId routines
+            autoChooser.addOption(
+                    "Drive Wheel Radius Characterization",
+                    DriveCommands.wheelRadiusCharacterization(sys_drive));
+            autoChooser.addOption(
+                    "Drive Simple FF Characterization",
+                    DriveCommands.feedforwardCharacterization(sys_drive));
+            autoChooser.addOption(
+                    "Drive SysId (Quasistatic Forward)",
+                    sys_drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+            autoChooser.addOption(
+                    "Drive SysId (Quasistatic Reverse)",
+                    sys_drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+            autoChooser.addOption(
+                    "Drive SysId (Dynamic Forward)",
+                    sys_drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+            autoChooser.addOption(
+                    "Drive SysId (Dynamic Reverse)",
+                    sys_drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        }
 
-                runTelop = DebugCommand.putNumber("Run Telop Auto", false);
+        runTelop = DebugCommand.putNumber("Run Telop Auto", false)::get;
 
         if (kAuto.RESET_ODOM_ON_CHANGE)
             autoChooser
                 .getSendableChooser()
                 .onChange(path -> resetPose());
 
-        SmartDashboard.putData(
-            "Reset",
-            Commands.runOnce(() -> resetPose()).ignoringDisable(true));
+        DebugCommand.register("Reset", Commands.runOnce(this::resetPose));
 
         // Configure the button bindings
         configureButtonBindings();
 
         // Controller Alerts
         new Trigger(() -> !primaryController.isConnected())
-                .onTrue(
-                    Commands.runOnce(() -> primaryDisconnectedAlert.set(true))
-                        .ignoringDisable(true)
-                )
-                .onFalse(
-                    Commands.runOnce(() -> primaryDisconnectedAlert.set(false))
+                .onChange(
+                    Commands.runOnce(() -> primaryDisconnectedAlert.set(!primaryController.isConnected()))
                         .ignoringDisable(true)
                 );
 
-            new Trigger(() -> !secondaryController.isConnected())
-                .onTrue(
-                    Commands.runOnce(() -> secondaryDisconnectedAlert.set(true))
-                        .ignoringDisable(true)
-                )
-                .onFalse(
-                    Commands.runOnce(() -> secondaryDisconnectedAlert.set(false))
+        new Trigger(() -> !secondaryController.isConnected())
+                .onChange(
+                    Commands.runOnce(() -> secondaryDisconnectedAlert.set(!secondaryController.isConnected()))
                         .ignoringDisable(true)
                 );
 
@@ -373,6 +379,7 @@ public class RobotContainer {
 
     public void updateSim() {
         SimulatedArena.getInstance().simulationPeriodic();
+
         Logger.recordOutput("Simulation/RobotPose", simConfig.getSimulatedDriveTrainPose());
         Logger.recordOutput(
                 "Simulation/Algae", SimulatedArena.getInstance().getGamePiecesArrayByType("Algae"));
@@ -406,6 +413,100 @@ public class RobotContainer {
         );
     }
 
+    public Command getLevelSelectorDistCommand(boolean ends) {
+        ScoringLevel[] levels = ScoringLevel.values();
+        BooleanSupplier[] conditionals = new BooleanSupplier[4];
+        Command[] commands = new Command[4];
+
+        for (int i = 0; i < conditionals.length; i++) {
+            final int index = i;
+            conditionals[i] = () -> levels[index] == selectedScoringLevel;
+            commands[i] = new ScoreCommand(sys_elevator, sys_armPivot, sys_endEffector, levels[index + 4], ends ? DriveCommands::isAligned : () -> false);
+        }
+
+        return CaseCommand.buildSelector(
+            conditionals, 
+            commands, 
+            Commands.print("Error: Couldn't find selected level to go to")
+        );
+    }
+
+    private Command fullAutoScore(kDirection side, ScoringLevel level) {
+        if (Constants.TUNNING)
+            return Commands.parallel(
+                DriveCommands.alignToPoint(
+                    sys_drive, 
+
+                    () -> AlignHelper.getClosestBranch(sys_drive.getBlueSidePose(), kClosestType.DISTANCE, side)
+                        .transformBy(new Transform2d(-Feet.of(1.0).in(Meters), 0, new Rotation2d())),
+
+                    () -> (level == null ? selectedScoringLevel : level) == ScoringLevel.LEVEL4 
+                        ? kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_SLOW
+                        : kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_FAST,
+
+                    () -> (level == null ? selectedScoringLevel : level) == ScoringLevel.LEVEL4 
+                        ? kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_SLOW
+                        : kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_FAST
+                ).beforeStarting(() -> AlignHelper.reset(sys_drive.getFieldRelativeSpeeds())),
+                level == null ?
+                getLevelSelectorCommand(false) : 
+                new ScoreCommand(sys_elevator, sys_armPivot, sys_endEffector, level, () -> false)
+            );
+        else
+            return Commands.parallel(
+                DriveCommands.alignToPoint(
+                    sys_drive, 
+
+                    () -> AlignHelper.getClosestBranch(sys_drive.getBlueSidePose(), kClosestType.DISTANCE, side),
+
+                    () -> (level == null ? selectedScoringLevel : level) == ScoringLevel.LEVEL4 
+                        ? kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_SLOW
+                        : kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_FAST,
+
+                    () -> (level == null ? selectedScoringLevel : level) == ScoringLevel.LEVEL4
+                        ? kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_SLOW
+                        : kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_FAST
+                ).beforeStarting(() -> AlignHelper.reset(sys_drive.getFieldRelativeSpeeds())),
+                level == null ? 
+                getLevelSelectorCommand(true) : 
+                new ScoreCommand(sys_elevator, sys_armPivot, sys_endEffector, level, DriveCommands::isAligned)
+            );
+            // return Commands.race(
+            //     Commands.parallel(
+            //         DriveCommands.alignToPoint(
+            //             sys_drive, 
+
+            //             () -> AlignHelper.getClosestBranch(sys_drive.getBlueSidePose(), kClosestType.DISTANCE, side),
+
+            //             () -> (level == null ? selectedScoringLevel : level) == ScoringLevel.LEVEL4 ? 
+            //             kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_SLOW :
+            //             kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_FAST
+            //         ).beforeStarting(() -> AlignHelper.reset(sys_drive.getFieldRelativeSpeeds())),
+            //         level == null ? getLevelSelectorCommand(true) : 
+            //         new ScoreCommand(sys_elevator, sys_armPivot, sys_endEffector, level, DriveCommands::isAligned)
+            //     ),
+            //     Commands.sequence(
+            //         Commands.waitUntil(() -> !Drive.isSafe()),
+            //         Commands.waitSeconds(1.5)
+            //     )
+            // ).andThen(
+            //     Commands.parallel(
+            //         DriveCommands.alignToPoint(
+            //             sys_drive, 
+
+            //             () -> AlignHelper.getClosestBranch(sys_drive.getBlueSidePose(), kClosestType.DISTANCE, side)
+            //                 .transformBy(new Transform2d(-Inches.of(5).in(Meters), 0, new Rotation2d())),
+
+            //             () -> (level == null ? selectedScoringLevel : level) == ScoringLevel.LEVEL4 ? 
+            //             kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_SLOW :
+            //             kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_FAST
+            //         ).beforeStarting(() -> AlignHelper.reset(sys_drive.getFieldRelativeSpeeds())),
+            //         level == null ? getLevelSelectorDistCommand(true) : 
+            //         new ScoreCommand(sys_elevator, sys_armPivot, sys_endEffector, level, DriveCommands::isAligned)
+            //     ).unless(DriveCommands::isAligned)
+            // );
+    }
+
     @AutoLogOutput(key = "Odometry/StartingPose")
     public Pose2d getStartingPose() {
         String autoName = autoChooser.getSendableChooser().getSelected();
@@ -428,7 +529,7 @@ public class RobotContainer {
             Pose2d pose = path.getStartingHolonomicPose().get();
 
             return AutoBuilder.shouldFlip() ? FlippingUtil.flipFieldPose(pose) : pose;
-        } catch (IOException | ParseException e) {
+        } catch (IOException | ParseException | IndexOutOfBoundsException e) {
             return new Pose2d();
         }
     }
@@ -442,7 +543,6 @@ public class RobotContainer {
 
         DebugCommand.register("Algae L2", new RemoveAlgae(sys_elevator, sys_armPivot, sys_endEffector, ScoringLevel.LEVEL2_ALGAE));
         DebugCommand.register("Algae L3", new RemoveAlgae(sys_elevator, sys_armPivot, sys_endEffector, ScoringLevel.LEVEL3_ALGAE));
-
 
         DebugCommand.register("Idle", new IdleCommand(sys_elevator, sys_armPivot, sys_endEffector));
 
@@ -460,57 +560,99 @@ public class RobotContainer {
 
         // NAMED COMMANDS
         NamedCommands.registerCommand(
-                "ALIGN_LEFT",
+                "SCORE_LEFT_L4",
                 new ConditionalCommand(
-                    DriveCommands.alignToPoint(sys_drive,
-                        () -> AlignHelper.getClosestBranch(
-                            sys_drive.getBlueSidePose(),
-                            kClosestType.DISTANCE,
-                            kDirection.LEFT
-                        )
-                    ),
-                    DriveCommands.alignToPoint(sys_drive,
-                        () -> AlignHelper.getClosestBranch(
-                            sys_drive.getBlueSidePose(),
-                            kClosestType.DISTANCE,
-                            kDirection.RIGHT
-                        )
-                    ),
+                    fullAutoScore(kDirection.LEFT, ScoringLevel.LEVEL4),
+                    fullAutoScore(kDirection.RIGHT, ScoringLevel.LEVEL4),
                     () -> !autoChooser.getSendableChooser().getSelected().startsWith("{R}")
-                ).raceWith(
-                    new ConditionalCommand(
-                        Commands.waitSeconds(1.5), 
-                        Commands.waitSeconds(0.5), 
-                        sys_endEffector::coralDetected
-                    )
                 )
+                .beforeStarting(() -> AlignHelper.reset(new ChassisSpeeds()))
+                .withTimeout(2.0)
+                .onlyIf(sys_endEffector::coralDetected)
             );
 
         NamedCommands.registerCommand(
-                "ALIGN_RIGHT",
+                "SCORE_RIGHT_L4",
                 new ConditionalCommand(
-                    DriveCommands.alignToPoint(sys_drive,
-                        () -> AlignHelper.getClosestBranch(
-                            sys_drive.getBlueSidePose(),
-                            kClosestType.DISTANCE,
-                            kDirection.RIGHT
-                        )
-                    ),
-                    DriveCommands.alignToPoint(sys_drive,
-                        () -> AlignHelper.getClosestBranch(
-                            sys_drive.getBlueSidePose(),
-                            kClosestType.DISTANCE,
-                            kDirection.LEFT
-                        )
-                    ),
+                    fullAutoScore(kDirection.RIGHT, ScoringLevel.LEVEL4),
+                    fullAutoScore(kDirection.LEFT, ScoringLevel.LEVEL4),
                     () -> !autoChooser.getSendableChooser().getSelected().startsWith("{R}")
-                ).raceWith(
-                    new ConditionalCommand(
-                        Commands.waitSeconds(1.5), 
-                        Commands.waitSeconds(0.5), 
-                        sys_endEffector::coralDetected
-                    )
                 )
+                .beforeStarting(() -> AlignHelper.reset(new ChassisSpeeds()))
+                .withTimeout(2.0)
+                .onlyIf(sys_endEffector::coralDetected)
+            );
+
+        NamedCommands.registerCommand(
+                "SCORE_LEFT_L3",
+                new ConditionalCommand(
+                    fullAutoScore(kDirection.LEFT, ScoringLevel.LEVEL3),
+                    fullAutoScore(kDirection.RIGHT, ScoringLevel.LEVEL3),
+                    () -> !autoChooser.getSendableChooser().getSelected().startsWith("{R}")
+                )
+                .beforeStarting(() -> AlignHelper.reset(new ChassisSpeeds()))
+                .withTimeout(2.0)
+                .onlyIf(sys_endEffector::coralDetected)
+            );
+
+        NamedCommands.registerCommand(
+                "SCORE_RIGHT_L3",
+                new ConditionalCommand(
+                    fullAutoScore(kDirection.RIGHT, ScoringLevel.LEVEL3),
+                    fullAutoScore(kDirection.LEFT, ScoringLevel.LEVEL3),
+                    () -> !autoChooser.getSendableChooser().getSelected().startsWith("{R}")
+                )
+                .beforeStarting(() -> AlignHelper.reset(new ChassisSpeeds()))
+                .withTimeout(2.0)
+                .onlyIf(sys_endEffector::coralDetected)
+            );
+
+        NamedCommands.registerCommand(
+                "SCORE_LEFT_L2",
+                new ConditionalCommand(
+                    fullAutoScore(kDirection.LEFT, ScoringLevel.LEVEL2),
+                    fullAutoScore(kDirection.RIGHT, ScoringLevel.LEVEL2),
+                    () -> !autoChooser.getSendableChooser().getSelected().startsWith("{R}")
+                )
+                .beforeStarting(() -> AlignHelper.reset(new ChassisSpeeds()))
+                .withTimeout(2.0)
+                .onlyIf(sys_endEffector::coralDetected)
+            );
+
+        NamedCommands.registerCommand(
+                "SCORE_RIGHT_L2",
+                new ConditionalCommand(
+                    fullAutoScore(kDirection.RIGHT, ScoringLevel.LEVEL2),
+                    fullAutoScore(kDirection.LEFT, ScoringLevel.LEVEL2),
+                    () -> !autoChooser.getSendableChooser().getSelected().startsWith("{R}")
+                )
+                .beforeStarting(() -> AlignHelper.reset(new ChassisSpeeds()))
+                .withTimeout(2.0)
+                .onlyIf(sys_endEffector::coralDetected)
+            );
+
+        NamedCommands.registerCommand(
+                "SCORE_LEFT_L1",
+                new ConditionalCommand(
+                    fullAutoScore(kDirection.LEFT, ScoringLevel.LEVEL1),
+                    fullAutoScore(kDirection.RIGHT, ScoringLevel.LEVEL1),
+                    () -> !autoChooser.getSendableChooser().getSelected().startsWith("{R}")
+                )
+                .beforeStarting(() -> AlignHelper.reset(new ChassisSpeeds()))
+                .withTimeout(2.0)
+                .onlyIf(sys_endEffector::coralDetected)
+            );
+
+        NamedCommands.registerCommand(
+                "SCORE_RIGHT_L1",
+                new ConditionalCommand(
+                    fullAutoScore(kDirection.RIGHT, ScoringLevel.LEVEL1),
+                    fullAutoScore(kDirection.LEFT, ScoringLevel.LEVEL1),
+                    () -> !autoChooser.getSendableChooser().getSelected().startsWith("{R}")
+                )
+                .beforeStarting(() -> AlignHelper.reset(new ChassisSpeeds()))
+                .withTimeout(2.0)
+                .onlyIf(sys_endEffector::coralDetected)
             );
 
         NamedCommands.registerCommand("IDLE",
@@ -518,19 +660,16 @@ public class RobotContainer {
                 .finallyDo(() -> sys_endEffector.io.setVoltage(0.0))
         );
 
-        NamedCommands.registerCommand("PREP ELEVATOR", 
+        NamedCommands.registerCommand("PREP_ELEVATOR", 
             Commands.sequence(
                 sys_armPivot.moveArm(kArmPivot.MOVEMENT_SETPOINT),
                 sys_elevator.elevatorGo(kElevator.ELEVATOR_PREP_HEIGHT)
             )
         );
       
-        NamedCommands.registerCommand("END WHEN COLLECTED", Commands.waitUntil(sys_endEffector::coralDetected).withTimeout(1.5));
+        NamedCommands.registerCommand("END_WHEN_COLLECTED", Commands.waitUntil(sys_endEffector::coralDetected).withTimeout(1.75));
 
-        NamedCommands.registerCommand("L1", new ScoreCommand(sys_elevator, sys_armPivot, sys_endEffector, ScoringLevel.LEVEL1, DriveCommands::isAligned).onlyIf(sys_endEffector::coralDetected).withTimeout(1.5));
-        NamedCommands.registerCommand("L2", new ScoreCommand(sys_elevator, sys_armPivot, sys_endEffector, ScoringLevel.LEVEL2, DriveCommands::isAligned).onlyIf(sys_endEffector::coralDetected).withTimeout(1.5));
-        NamedCommands.registerCommand("L3", new ScoreCommand(sys_elevator, sys_armPivot, sys_endEffector, ScoringLevel.LEVEL3, DriveCommands::isAligned).onlyIf(sys_endEffector::coralDetected).withTimeout(1.5));
-        NamedCommands.registerCommand("L4", new ScoreCommand(sys_elevator, sys_armPivot, sys_endEffector, ScoringLevel.LEVEL4, DriveCommands::isAligned).onlyIf(sys_endEffector::coralDetected).withTimeout(1.5));
+        NamedCommands.registerCommand("DRIVE_FORWARD", Commands.runOnce(() -> sys_drive.driveForward(-0.25), sys_drive));
 
         NamedCommands.registerCommand("REMOVE_ALGAE", 
             AutoCommands.automaticAlgae(sys_drive, sys_endEffector, sys_elevator, sys_armPivot)
@@ -538,6 +677,8 @@ public class RobotContainer {
         );
 
         NamedCommands.registerCommand("BACKOFF", AutoCommands.backOffFromAlgae(sys_drive, new Rotation2d()));
+
+        NamedCommands.registerCommand("AUTO_END", AutoTimer.end(kAuto.PRINT_AUTO_TIME));
     }
 
     /**
@@ -547,6 +688,19 @@ public class RobotContainer {
      * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
      */
     private void configureButtonBindings() {
+
+        primaryController.leftTrigger(0.75)
+            .onTrue(
+                Commands.runOnce(() -> leftTriggerAlert.set(false))
+                    .ignoringDisable(true)
+            );
+
+        primaryController.rightTrigger(0.75)
+            .onTrue(
+                Commands.runOnce(() -> rightTriggerAlert.set(false))
+                    .ignoringDisable(true)
+            );
+
         // Default command, normal field-relative drive
         sys_drive.setDefaultCommand(
             DriveCommands.joystickDrive(
@@ -559,9 +713,12 @@ public class RobotContainer {
 
         primaryController.start()
             .onTrue(
-                sys_elevator.elevatorGo(ScoringLevel.LEVEL4.elevatorSetpoint)
-                    .onlyIf(() -> sys_armPivot.getPosition().lte(kArmPivot.MOVEMENT_SETPOINT.plus(Degrees.of(1.0))))
-            ).onFalse(sys_elevator.startManualMove(0.0));
+                Commands.runOnce(sys_drive::coastMode)
+                    .ignoringDisable(true)
+            ).onFalse(
+                Commands.runOnce(sys_drive::brakeMode)
+                    .ignoringDisable(true)
+            );
 
         // // Reset gyro to 0° when Start button is pressed
         // primaryController
@@ -587,7 +744,7 @@ public class RobotContainer {
             .onFalse(
                 new ConditionalCommand(
                     Commands.waitSeconds(0.2),
-                    sys_endEffector.runUntilCoralNotDetected(kEndEffector.SCORE_VOLTAGE), 
+                    sys_endEffector.runUntilCoralNotDetected(ScoringLevel.LEVEL4.voltage),
                     () -> Constants.currentMode == Mode.SIM
                 )
                 .andThen(
@@ -595,10 +752,22 @@ public class RobotContainer {
                 )
             );
 
+        primaryController.y()
+            .whileTrue(
+                DriveCommands.alignToPoint(sys_drive, () -> FlippingUtil.flipFieldPose(new Pose2d(14.031, 5.008, new Rotation2d(-1.843))))
+                .alongWith(
+                    new ScoreCommand(sys_elevator, sys_armPivot, ScoringLevel.LEVEL1),
+                    Commands.waitUntil(DriveCommands::isAligned).andThen(
+                        sys_endEffector.setVoltage(ScoringLevel.LEVEL1.voltage)
+                    )
+                )
+            ).onFalse(new IdleCommand(sys_elevator, sys_armPivot, sys_endEffector));
+
         primaryController.x()
             .whileTrue(
                 new ConditionalCommand(
                     Commands.sequence(
+                        Commands.runOnce(sys_drive::stop, sys_drive),
                         Commands.runOnce(() -> primaryController.setRumble(RumbleType.kBothRumble, 0.4))
                             .alongWith(Commands.waitSeconds(1.0)),
                         AutoCommands.automaticAlgae(sys_drive, sys_endEffector, sys_elevator, sys_armPivot)
@@ -613,18 +782,22 @@ public class RobotContainer {
             .onTrue(new IdleCommand(sys_elevator, sys_armPivot, sys_endEffector));
 
 
+        // TODO: Check to see if we should wait until the bot sees the tag to auto align
+
         primaryController
             .leftBumper()
             .and(() -> !isTelopAuto)
                 .whileTrue(
-                    Commands.parallel(
-                        DriveCommands.alignToPoint(
-                            sys_drive, 
-                            () -> AlignHelper.getClosestBranch(sys_drive.getBlueSidePose(), kClosestType.DISTANCE, kDirection.LEFT)
-                        ).beforeStarting(() -> AlignHelper.reset(sys_drive.getFieldRelativeSpeeds())),
-                        getLevelSelectorCommand(true)
-                    ).andThen(
+                    Commands.sequence(
+                        fullAutoScore(kDirection.LEFT, null),
                         new IdleCommand(sys_elevator, sys_armPivot, sys_endEffector)
+                    ).deadlineFor(
+                        Commands.repeatingSequence(
+                            Commands.waitUntil(() -> !sys_vision.hasTarget()),
+                            Commands.runOnce(() -> primaryController.setRumble(RumbleType.kBothRumble, 0.5)),
+                            Commands.waitUntil(sys_vision::hasTarget),
+                            Commands.runOnce(() -> primaryController.setRumble(RumbleType.kBothRumble, 0.0))
+                        ).finallyDo(() -> primaryController.setRumble(RumbleType.kBothRumble, 0.0))
                     )
                 ).onFalse(
                     new IdleCommand(sys_elevator, sys_armPivot, sys_endEffector)
@@ -634,16 +807,20 @@ public class RobotContainer {
             .rightBumper()
             .and(() -> !isTelopAuto)
                 .whileTrue(
-                    Commands.parallel(
-                        DriveCommands.alignToPoint(
-                            sys_drive, 
-                            () -> AlignHelper.getClosestBranch(sys_drive.getBlueSidePose(), kClosestType.DISTANCE, kDirection.RIGHT)
-                        ).beforeStarting(() -> AlignHelper.reset(sys_drive.getFieldRelativeSpeeds())),
-                        getLevelSelectorCommand(true)
-                    ).andThen(
+                    Commands.sequence(
+                        fullAutoScore(kDirection.RIGHT, null),
                         new IdleCommand(sys_elevator, sys_armPivot, sys_endEffector)
+                    ).deadlineFor(
+                        Commands.repeatingSequence(
+                            Commands.waitUntil(() -> !sys_vision.hasTarget()),
+                            Commands.runOnce(() -> primaryController.setRumble(RumbleType.kBothRumble, 0.5)),
+                            Commands.waitUntil(sys_vision::hasTarget),
+                            Commands.runOnce(() -> primaryController.setRumble(RumbleType.kBothRumble, 0.0))
+                        ).finallyDo(() -> primaryController.setRumble(RumbleType.kBothRumble, 0.0))
                     )
-                ).onFalse(new IdleCommand(sys_elevator, sys_armPivot, sys_endEffector));
+                ).onFalse(
+                    new IdleCommand(sys_elevator, sys_armPivot, sys_endEffector)
+                );
 
         primaryController.povLeft()
             .and(() -> !isTelopAuto)
@@ -757,13 +934,10 @@ public class RobotContainer {
         return AutoTimer.start()
             .alongWith(autoChooser.get())
             .andThen(
-                Commands.parallel(
-                    AutoTimer.end(kAuto.PRINT_AUTO_TIME).ignoringDisable(true),
-                    Commands.either(
-                        AutoCommands.telopAutoCommand(sys_drive, sys_elevator, sys_armPivot, sys_endEffector, getLevelSelectorCommand(true), () -> removeAlgae, () -> false), 
-                        Commands.none(),
-                        runTelop::get
-                    )
+                Commands.either(
+                    AutoCommands.telopAutoCommand(sys_drive, sys_elevator, sys_armPivot, sys_endEffector, getLevelSelectorCommand(true), () -> removeAlgae, () -> false), 
+                    Commands.none(),
+                    runTelop
                 )
             );
     }

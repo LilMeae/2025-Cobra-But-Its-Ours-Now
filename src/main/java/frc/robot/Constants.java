@@ -61,6 +61,8 @@ public final class Constants {
     REPLAY
   }
 
+  public static final boolean TUNNING = false;
+
   public static final class kDrive {
     public static final Mass ROBOT_FULL_MASS = Kilograms.of(60.27789);
     public static final MomentOfInertia ROBOT_MOI = KilogramSquareMeters.of(2.881);
@@ -73,29 +75,41 @@ public final class Constants {
     /** When this is true the robot will set it's position where the path starts when the auto is selected. */
     public static final boolean RESET_ODOM_ON_CHANGE = true;
 
-    public static final PIDConstants TRANSLATION_PID = new PIDConstants(5.0 , 0.0, 0.0);
-    public static final PIDConstants ROTATION_PID    = new PIDConstants(5.0 , 0.0, 0.0);
+    public static final PIDConstants TRANSLATION_PID = new PIDConstants(5.0, 0.0, 0.0);
+    public static final PIDConstants ROTATION_PID    = new PIDConstants(5.0, 0.0, 0.0);
   }
 
   public static final class kAutoAlign {
-    public static final PIDConstants ALIGN_PID = new PIDConstants(4.7, 0.0, 0.12);
+    public static final PIDConstants ALIGN_PID = new PIDConstants(4.9, 0.0, 0.28);
 
-    public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY     = MetersPerSecond         .of(1.75);
-    public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION = MetersPerSecondPerSecond.of(6.0);
+    public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY_SLOW     = MetersPerSecond         .of(2.00);
+    public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY_FAST     = MetersPerSecond         .of(2.75);
+    public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_SLOW = MetersPerSecondPerSecond.of(8.00);
+    public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_FAST = MetersPerSecondPerSecond.of(25.0);
 
-    public static final Distance TRANSLATION_TOLLERANCE = Centimeters.of(2.5);
-    public static final Angle    ROTATION_TOLLERANCE    = Degrees    .of(1.5);
+    public static final Distance TRANSLATION_TOLERANCE;
+    public static final Angle    ROTATION_TOLERANCE   ;
+    public static final LinearVelocity VELOCITY_TOLERANCE = MetersPerSecond.of(0.1);
+    static {
+        if (TUNNING) {
+            TRANSLATION_TOLERANCE = Centimeters.of(0.00);
+            ROTATION_TOLERANCE    = Degrees    .of(0.00);
+        } else {
+            TRANSLATION_TOLERANCE = Centimeters.of(1.75);
+            ROTATION_TOLERANCE    = Degrees    .of(1.25);
+        }
+    }
 
     public static final PathConstraints PATH_FIND_CONSTRAINTS = new PathConstraints(
         TunerConstants.kSpeedAt12Volts,
-        MAX_AUTO_ALIGN_ACCELERATION,
+        MAX_AUTO_ALIGN_ACCELERATION_FAST,
         RadiansPerSecond.of(TunerConstants.kSpeedAt12Volts.in(MetersPerSecond) / Drive.DRIVE_BASE_RADIUS),
         DegreesPerSecondPerSecond.of(720.0)
     );
 
     public static final Pose2d PROCESSOR_TARGET = new Pose2d(11.568, 7.500, Rotation2d.fromDegrees(-90.000));
 
-    public static final Time VELOCITY_TIME_ADJUSTEDMENT = Milliseconds.of(5000);
+    public static final Time VELOCITY_TIME_ADJUSTEDMENT = Milliseconds.of(250);
     public static final int  TIME_ADJUSTMENT_TIMEOUT = 10;
 
     public static final class kReef {
@@ -161,9 +175,9 @@ public final class Constants {
 
     public static final double MAGNET_SENSOR_OFFSET = -0.344727;
 
-    public static final double kP = 150.0;
+    public static final double kP = 112.0;
     public static final double kI = 0.0;
-    public static final double kD = 0.0;
+    public static final double kD = 0.0075;
     public static final double kG = 0.025 * 12.0;
 
     public static final double   ARM_GEARING      = (72/22) * 4*9;
@@ -176,18 +190,25 @@ public final class Constants {
     public static final Angle maxAngles = Degrees.of(120);
 
     public static final Angle MOVEMENT_SETPOINT = Degrees.of(88);
-    public static final Angle PICKUP_ANGLE  = Degrees.of(105);
+    public static final Angle PICKUP_ANGLE  = Degrees.of(104.5);
 
-    public static final PIDConstants SIMULATED_PID_VALUES = new PIDConstants(3.75, 0.0, 0.2);
+    public static final PIDConstants SIMULATED_PID_VALUES = new PIDConstants(3.25, 0.0, 0.3);
   }
 
     public static enum ScoringLevel {
-        LEVEL1(      Meters.of(0.030), Degrees.of(100.), kEndEffector.SCORE_VOLTAGE),
-        LEVEL2(      Meters.of(0.160), Degrees.of(83.0), 5.0),
-        LEVEL3(      Meters.of(0.360), Degrees.of(83.0), 5.0),
-        LEVEL4(      Meters.of(0.665), Degrees.of(87.0), kEndEffector.SCORE_VOLTAGE),
-        LEVEL2_ALGAE(Meters.of(0.230), Degrees.of(70.5), 0.0),
-        LEVEL3_ALGAE(Meters.of(0.430), Degrees.of(70.5), 0.0),
+        LEVEL1(      Meters.of(0.043), Degrees.of(100.), 12.),
+        LEVEL2(      Meters.of(0.170), Degrees.of(83.0), 6.5),
+        LEVEL3(      Meters.of(0.370), Degrees.of(83.0), 6.5),
+        LEVEL4(      Meters.of(0.665), Degrees.of(87.0), 7.6),
+
+        // TODO: Tune these values
+        LEVEL1_DIST( Meters.of(0.030), Degrees.of(100.), 2.0),
+        LEVEL2_DIST( Meters.of(0.170), Degrees.of(83.0), 6.5),
+        LEVEL3_DIST( Meters.of(0.370), Degrees.of(83.0), 6.5),
+        LEVEL4_DIST( Meters.of(0.665), Degrees.of(87.0), 7.6),
+
+        LEVEL2_ALGAE(Meters.of(0.220), Degrees.of(70.5), 0.0), // No voltages, stored in algae voltage
+        LEVEL3_ALGAE(Meters.of(0.420), Degrees.of(70.5), 0.0), // No voltages, stored in algae voltage
         /** Not Implemented */
         BARGE(       Meters.of(0.650), Degrees.of(100.), 0.0),
         /** Not Implemented */
@@ -208,11 +229,12 @@ public final class Constants {
       public static final int ENDEFFECTOR_MOTOR_ID = 23;
       public static final int CURRENT_LIMIT = 40;
       public static final int TIMOFFLIGHT_SENSORID = 28;
-      public static final Distance TIMEOFFLIGHT_DISTANCE_VALIDATION = Millimeters.of(110);
+      public static final Distance TIMEOFFLIGHT_DISTANCE_VALIDATION = Millimeters.of(140);
 
-      public static final double IDLE_VOLTAGE  =  3.5;
-      public static final double SCORE_VOLTAGE =  7.6;
+      public static final double IDLE_VOLTAGE  =  5.5;
       public static final double ALGAE_VOLTAGE = -4.0;
+
+      public static final double ALGAE_CURRENT = 20.0;
   }
 
   public static final class kElevator {
@@ -229,9 +251,9 @@ public final class Constants {
     public static final double ELEVATOR_MIN_HEIGHT = 0.0;
     public static final double ELEVATOR_MAX_HEIGHT = 0.652587890625;
 
-    public static final Distance ELEVATOR_PREP_HEIGHT = Meters.of(0.30);
+    public static final Distance ELEVATOR_PREP_HEIGHT = Meters.of(0.175);
 
-    public static final Distance IDLING_HEIGHT = Meters.of(0.024);
+    public static final Distance IDLING_HEIGHT = Meters.of(0.022);
   }
 
   public static final class kVision {
@@ -247,7 +269,7 @@ public final class Constants {
     public static final int THROTTLE_DISABLED = 200;
 
     public static final Transform3d OFFSET_FROM_ROBOT_ORIGIN = new Transform3d(
-                                                                        new Translation3d(0.1322, -0.2170, 0.3804),
+                                                                        new Translation3d(0.1324, -0.2169, 0.3804),
                                                                         new Rotation3d(   0,  0,   Units.degreesToRadians(-20)));
   }
 }

@@ -1,0 +1,89 @@
+{
+  "name": "Cobra",
+  "rotations": [
+    {
+        "axis": "x",
+        "degrees": 90
+      },
+      {
+        "axis": "y",
+        "degrees": 0
+      },
+      {
+        "axis": "z",
+        "degrees": 90
+      }
+  ],
+  "position": [-0.01, -0.023, 0],
+  "cameras": [
+      {
+        "name": "LIMELIGHT",
+        "rotations": [
+          {
+            "axis": "y",
+            "degrees": 0
+          },
+          {
+            "axis": "z",
+            "degrees": -20
+          }
+        ],
+        "position": [0.132, 0.217, 0.38],
+        "resolution": [1280, 800],
+        "fov": 80
+      }
+  ], 
+  "components": [
+    {
+      "zeroedRotations": [
+        {
+          "axis": "x",
+          "degrees": 90
+        },
+        {
+          "axis": "y",
+          "degrees": 180
+        },
+        {
+          "axis": "z",
+          "degrees": 90
+        }
+      ],
+      "zeroedPosition": [0.038, -0.18, 1.07]
+    },
+    {
+        "zeroedRotations": [
+          {
+            "axis": "x",
+            "degrees": 90
+          },
+          {
+            "axis": "y",
+            "degrees": 0
+          },
+          {
+            "axis": "z",
+            "degrees": -90
+          }
+        ],
+        "zeroedPosition": [0.038, -0.178, -0.14]
+      }, 
+      {
+        "zeroedRotations": [
+          {
+            "axis": "x",
+            "degrees": 90
+          },
+          {
+            "axis": "y",
+            "degrees": 0
+          },
+          {
+            "axis": "z",
+            "degrees": -90
+          }
+        ],
+        "zeroedPosition": [0, 0, 0]
+      }
+  ]
+}

@@ -13,13 +13,13 @@
         {
           "type": "named",
           "data": {
-            "name": "ALIGN_LEFT"
+            "name": "SCORE_LEFT_L4"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "L4"
+            "name": "AUTO_END"
           }
         },
         {

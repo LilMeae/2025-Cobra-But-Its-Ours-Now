@@ -26,6 +26,7 @@ public interface ModuleIO {
     public double driveVelocityRadPerSec = 0.0;
     public double driveAppliedVolts = 0.0;
     public double driveCurrentAmps = 0.0;
+    public double driveTempCels = 0.0;
 
     public boolean turnConnected = false;
     public boolean turnEncoderConnected = false;
@@ -34,6 +35,7 @@ public interface ModuleIO {
     public double turnVelocityRadPerSec = 0.0;
     public double turnAppliedVolts = 0.0;
     public double turnCurrentAmps = 0.0;
+    public double turnTempCels = 0.0;
 
     public MagnetHealthValue magnetHealth = MagnetHealthValue.Magnet_Invalid;
 
