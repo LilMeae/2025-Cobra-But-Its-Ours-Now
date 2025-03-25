@@ -197,15 +197,15 @@ public final class Constants {
 
     public static enum ScoringLevel {
         LEVEL1(      Meters.of(0.043), Degrees.of(100.), 12.),
-        LEVEL2(      Meters.of(0.170), Degrees.of(83.0), 6.5),
-        LEVEL3(      Meters.of(0.370), Degrees.of(83.0), 6.5),
-        LEVEL4(      Meters.of(0.665), Degrees.of(87.0), 7.6),
+        LEVEL2(      Meters.of(0.185), Degrees.of(75.0), 5.5),
+        LEVEL3(      Meters.of(0.385), Degrees.of(75.0), 5.5),
+        LEVEL4(      Meters.of(0.665), Degrees.of(87.0), 7.5),
 
         // TODO: Tune these values
         LEVEL1_DIST( Meters.of(0.030), Degrees.of(100.), 2.0),
-        LEVEL2_DIST( Meters.of(0.170), Degrees.of(83.0), 6.5),
-        LEVEL3_DIST( Meters.of(0.370), Degrees.of(83.0), 6.5),
-        LEVEL4_DIST( Meters.of(0.665), Degrees.of(87.0), 7.6),
+        LEVEL2_DIST( Meters.of(0.170), Degrees.of(83.0), 5.5),
+        LEVEL3_DIST( Meters.of(0.370), Degrees.of(83.0), 5.5),
+        LEVEL4_DIST( Meters.of(0.665), Degrees.of(87.0), 7.5),
 
         LEVEL2_ALGAE(Meters.of(0.220), Degrees.of(70.5), 0.0), // No voltages, stored in algae voltage
         LEVEL3_ALGAE(Meters.of(0.420), Degrees.of(70.5), 0.0), // No voltages, stored in algae voltage
