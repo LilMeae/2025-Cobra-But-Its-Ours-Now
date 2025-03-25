@@ -241,7 +241,7 @@ public final class Constants {
     public static final int MAIN_MOTOR_ID = 20;
     public static final int FOLLOWER_MOTOR_ID = 21;
     public static final double CURRENT_LIMIT = 30.0;
-    public static final double kGearing = 12.0/1.0;
+    public static final double kGearing = 9.0/1.0;
     public static final Distance ELEVATOR_DRUMRADIUS = Inches.of(1.751/2.0);
     public static final double kCircumfrence = 2 * Math.PI * ELEVATOR_DRUMRADIUS.in(Meters);
     public static final double kRotationConverter = kCircumfrence / kGearing;
