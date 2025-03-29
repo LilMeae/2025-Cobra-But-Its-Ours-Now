@@ -15,6 +15,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import com.pathplanner.lib.config.PIDConstants;
@@ -64,7 +65,7 @@ public final class Constants {
   public static final boolean TUNNING = false;
 
   public static final class kDrive {
-    public static final Mass ROBOT_FULL_MASS = Kilograms.of(60.27789);
+    public static final Mass ROBOT_FULL_MASS = Kilograms.of(62.319);
     public static final MomentOfInertia ROBOT_MOI = KilogramSquareMeters.of(2.881);
     public static final double WHEEL_COF = 1.916;
   }
@@ -83,7 +84,7 @@ public final class Constants {
     public static final PIDConstants ALIGN_PID = new PIDConstants(4.9, 0.0, 0.28);
 
     public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY_SLOW     = MetersPerSecond         .of(2.00);
-    public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY_FAST     = MetersPerSecond         .of(2.75);
+    public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY_FAST     = MetersPerSecond         .of(3.25);
     public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_SLOW = MetersPerSecondPerSecond.of(8.00);
     public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_FAST = MetersPerSecondPerSecond.of(25.0);
 
@@ -152,6 +153,12 @@ public final class Constants {
             BRANCHES.put(entry.getKey().name() + ".R", entry.getValue().transformBy(RIGHT_OFFSET_TO_BRANCH));
         }
       }
+
+      public static final ArrayList<Pose2d> L1_POSES = new ArrayList<>();
+      static {
+        for (int i = 0; i < 6; i++)
+            L1_POSES.add(generatePose(Rotation2d.fromDegrees(25 + i * 60)));
+      }
     }
 
     public static final class kStation {
@@ -192,20 +199,16 @@ public final class Constants {
     public static final Angle MOVEMENT_SETPOINT = Degrees.of(88);
     public static final Angle PICKUP_ANGLE  = Degrees.of(104.5);
 
+    public static final Angle L1_PICKUP_ANGLE = Degrees.of(86);
+
     public static final PIDConstants SIMULATED_PID_VALUES = new PIDConstants(3.25, 0.0, 0.3);
   }
 
     public static enum ScoringLevel {
-        LEVEL1(      Meters.of(0.043), Degrees.of(100.), 12.),
-        LEVEL2(      Meters.of(0.185), Degrees.of(75.0), 5.5),
-        LEVEL3(      Meters.of(0.385), Degrees.of(75.0), 5.5),
+        LEVEL1(      Meters.of(0.010), Degrees.of(66.0), -3.0),
+        LEVEL2(      Meters.of(0.185), Degrees.of(79.0), 6.0),
+        LEVEL3(      Meters.of(0.385), Degrees.of(79.0), 6.0),
         LEVEL4(      Meters.of(0.665), Degrees.of(87.0), 7.5),
-
-        // TODO: Tune these values
-        LEVEL1_DIST( Meters.of(0.030), Degrees.of(100.), 2.0),
-        LEVEL2_DIST( Meters.of(0.170), Degrees.of(83.0), 5.5),
-        LEVEL3_DIST( Meters.of(0.370), Degrees.of(83.0), 5.5),
-        LEVEL4_DIST( Meters.of(0.665), Degrees.of(87.0), 7.5),
 
         LEVEL2_ALGAE(Meters.of(0.220), Degrees.of(70.5), 0.0), // No voltages, stored in algae voltage
         LEVEL3_ALGAE(Meters.of(0.420), Degrees.of(70.5), 0.0), // No voltages, stored in algae voltage

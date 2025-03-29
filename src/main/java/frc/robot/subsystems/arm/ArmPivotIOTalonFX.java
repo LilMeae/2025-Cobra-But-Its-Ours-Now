@@ -26,6 +26,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.kArmPivot;
+import frc.robot.util.PhoenixUtil;
 
 public class ArmPivotIOTalonFX implements ArmPivotIO {
     private TalonFX armMotor;
@@ -116,7 +117,7 @@ public class ArmPivotIOTalonFX implements ArmPivotIO {
     
     @Override
     public void setSetpoint(Angle armPositionRad) {
-        armMotor.setControl(positionVoltage.withPosition(armPositionRad));
+        PhoenixUtil.tryUntilOk(3, () -> armMotor.setControl(positionVoltage.withPosition(armPositionRad)));
     }
 
     @Override

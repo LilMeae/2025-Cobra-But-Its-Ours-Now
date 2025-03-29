@@ -70,21 +70,24 @@ public class EndEffector extends SubsystemBase {
                 ),
                 setVoltage(0.0),
                 Commands.waitSeconds(0.1)
-            ).raceWith(
-                Commands.sequence(
-                    Commands.waitUntil(this::coralDetected),
-                    Commands.waitSeconds(0.075)
-                )
+            ).until(this::coralDetected)
+            .andThen(
+                setVoltage(2.0),
+                Commands.waitSeconds(0.125)
             ).unless(this::coralDetected)
             .finallyDo(() -> io.setVoltage(0.0));
 
     }
     // Run until coral is no longer detected, if spike in current, wait then rerun
     public Command runUntilCoralNotDetected(double voltage) {
+        return runUntilCoralNotDetected(() -> voltage);
+    }
+
+    public Command runUntilCoralNotDetected(DoubleSupplier voltage) {
         if (Constants.currentMode == Mode.SIM)
             return Commands.sequence(
                 Commands.runOnce(
-                    () -> io.setVoltage(voltage), 
+                    () -> io.setVoltage(voltage.getAsDouble()), 
                     this
                 ),
                 Commands.waitSeconds(0.2),
@@ -95,7 +98,7 @@ public class EndEffector extends SubsystemBase {
             );
         else
             return Commands.repeatingSequence(
-                setVoltage(() -> voltage - voltageOffset.get()),
+                setVoltage(() -> voltage.getAsDouble() - voltageOffset.get()),
                 new WaitThen(
                     0.2,
                     Commands.waitUntil(() -> io.getMotorCurrent() >= kEndEffector.CURRENT_LIMIT - 3)

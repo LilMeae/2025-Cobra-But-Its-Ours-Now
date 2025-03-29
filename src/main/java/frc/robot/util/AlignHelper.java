@@ -109,6 +109,10 @@ public class AlignHelper {
         return poses;
     }
 
+    public static Pose2d getClosestL1(Pose2d robotPose, kClosestType type) {
+        return calculator(robotPose, type, kReef.L1_POSES);
+    }
+
     private static Pose2d calculator(Pose2d robotPose, kClosestType type, Collection<Pose2d> poses) {
         Pose2d estimatedPose = robotPose.plus(
             new Transform2d(
