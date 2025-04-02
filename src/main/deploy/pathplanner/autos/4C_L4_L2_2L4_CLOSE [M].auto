@@ -64,7 +64,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "LP to BLL"
+                        "pathName": "LP to B"
                       }
                     }
                   ]
@@ -79,12 +79,6 @@
                       "data": {
                         "name": "IDLE"
                       }
-                    },
-                    {
-                      "type": "named",
-                      "data": {
-                        "name": "PREP_ELEVATOR"
-                      }
                     }
                   ]
                 }
@@ -95,7 +89,7 @@
         {
           "type": "named",
           "data": {
-            "name": "SCORE_LEFT_L4"
+            "name": "SCORE_LEFT_L2"
           }
         },
         {
@@ -109,7 +103,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "BLL to LP"
+                        "pathName": "B to LP"
                       }
                     },
                     {
@@ -133,7 +127,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "LP to RBL"
+                        "pathName": "LP to BL"
                       }
                     }
                   ]
@@ -178,7 +172,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "RBL to LP"
+                        "pathName": "BL to LP"
                       }
                     },
                     {
@@ -202,7 +196,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "LP to B"
+                        "pathName": "LP to BL"
                       }
                     }
                   ]
@@ -216,6 +210,12 @@
                       "type": "named",
                       "data": {
                         "name": "IDLE"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "CORAL_COAST"
                       }
                     },
                     {
@@ -241,15 +241,15 @@
           "data": {
             "commands": [
               {
-                "type": "named",
+                "type": "path",
                 "data": {
-                  "name": "AUTO_END"
+                  "pathName": "BL to LP"
                 }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "BACKOFF"
+                  "name": "AUTO_END"
                 }
               },
               {

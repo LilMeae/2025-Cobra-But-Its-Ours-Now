@@ -5,6 +5,12 @@
     "data": {
       "commands": [
         {
+          "type": "wait",
+          "data": {
+            "waitTime": 5.0
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "MS to FAR"
@@ -13,7 +19,7 @@
         {
           "type": "named",
           "data": {
-            "name": "SCORE_LEFT_L4"
+            "name": "SCORE_RIGHT_L4"
           }
         },
         {

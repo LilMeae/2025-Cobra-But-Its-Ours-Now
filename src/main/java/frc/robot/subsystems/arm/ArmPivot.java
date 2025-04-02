@@ -38,7 +38,7 @@ public class ArmPivot extends SubsystemBase {
     public Command moveArm(Angle positionRad) {
         return Commands.sequence(
             Commands.runOnce(() -> io.setSetpoint(positionRad), this),
-            Commands.waitUntil(() -> getPosition().isNear(positionRad, Degrees.of(1)))
+            Commands.waitUntil(() -> getPosition().isNear(positionRad, Degrees.of(1.5)))
         );
     }
 

@@ -84,19 +84,20 @@ public final class Constants {
     public static final PIDConstants ALIGN_PID = new PIDConstants(4.9, 0.0, 0.28);
 
     public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY_SLOW     = MetersPerSecond         .of(2.00);
-    public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY_FAST     = MetersPerSecond         .of(3.25);
+    public static final LinearVelocity     MAX_AUTO_ALIGN_VELOCITY_FAST     = MetersPerSecond         .of(2.75);
     public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_SLOW = MetersPerSecondPerSecond.of(8.00);
-    public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_FAST = MetersPerSecondPerSecond.of(25.0);
+    public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_FAST = MetersPerSecondPerSecond.of(16.0);
 
     public static final Distance TRANSLATION_TOLERANCE;
     public static final Angle    ROTATION_TOLERANCE   ;
     public static final LinearVelocity VELOCITY_TOLERANCE = MetersPerSecond.of(0.1);
+    public static final LinearVelocity AUTO_VELOCITY_TOLERANCE = MetersPerSecond.of(0.15);
     static {
         if (TUNNING) {
             TRANSLATION_TOLERANCE = Centimeters.of(0.00);
             ROTATION_TOLERANCE    = Degrees    .of(0.00);
         } else {
-            TRANSLATION_TOLERANCE = Centimeters.of(1.75);
+            TRANSLATION_TOLERANCE = Centimeters.of(2.00);
             ROTATION_TOLERANCE    = Degrees    .of(1.25);
         }
     }
@@ -110,7 +111,7 @@ public final class Constants {
 
     public static final Pose2d PROCESSOR_TARGET = new Pose2d(11.568, 7.500, Rotation2d.fromDegrees(-90.000));
 
-    public static final Time VELOCITY_TIME_ADJUSTEDMENT = Milliseconds.of(250);
+    public static final Time VELOCITY_TIME_ADJUSTEDMENT = Milliseconds.of(750);
     public static final int  TIME_ADJUSTMENT_TIMEOUT = 10;
 
     public static final class kReef {
@@ -165,8 +166,10 @@ public final class Constants {
         private static final Distance DISTANCE_RAMPS = Inches .of( 8.000);
         private static final Angle    STATION_ANGLE  = Degrees.of(-54.000);
 
-        public static final Pose2d LEFT_STATION  = new Pose2d(1.498, 7.274, Rotation2d.fromDegrees(STATION_ANGLE.in(Degrees)));
-        public static final Pose2d RIGHT_STATION = FieldMirror.mirrorPose(LEFT_STATION);
+        public static final Transform2d FIELD_OFFSET = new Transform2d(-0.25, 0, new Rotation2d());
+
+        public static final Pose2d LEFT_STATION  = new Pose2d(1.498, 7.274, Rotation2d.fromDegrees(STATION_ANGLE.in(Degrees))).transformBy(FIELD_OFFSET);
+        public static final Pose2d RIGHT_STATION = FieldMirror.mirrorPose(LEFT_STATION).transformBy(FIELD_OFFSET);
 
         public static final Transform2d STATIONS_OFFSET = new Transform2d(
             0.0,
@@ -182,7 +185,7 @@ public final class Constants {
 
     public static final double MAGNET_SENSOR_OFFSET = -0.344727;
 
-    public static final double kP = 112.0;
+    public static final double kP = 120.0;
     public static final double kI = 0.0;
     public static final double kD = 0.0075;
     public static final double kG = 0.025 * 12.0;
@@ -206,8 +209,8 @@ public final class Constants {
 
     public static enum ScoringLevel {
         LEVEL1(      Meters.of(0.010), Degrees.of(66.0), -3.0),
-        LEVEL2(      Meters.of(0.185), Degrees.of(79.0), 6.0),
-        LEVEL3(      Meters.of(0.385), Degrees.of(79.0), 6.0),
+        LEVEL2(      Meters.of(0.17), Degrees.of(86.0), 6.0),
+        LEVEL3(      Meters.of(0.37), Degrees.of(86.0), 6.0),
         LEVEL4(      Meters.of(0.665), Degrees.of(87.0), 7.5),
 
         LEVEL2_ALGAE(Meters.of(0.220), Degrees.of(70.5), 0.0), // No voltages, stored in algae voltage
@@ -254,7 +257,7 @@ public final class Constants {
     public static final double ELEVATOR_MIN_HEIGHT = 0.0;
     public static final double ELEVATOR_MAX_HEIGHT = 0.652587890625;
 
-    public static final Distance ELEVATOR_PREP_HEIGHT = Meters.of(0.175);
+    public static final Distance ELEVATOR_PREP_HEIGHT = Meters.of(0.15);
 
     public static final Distance IDLING_HEIGHT = Meters.of(0.022);
   }

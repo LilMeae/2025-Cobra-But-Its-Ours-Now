@@ -5,13 +5,32 @@
     "data": {
       "commands": [
         {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "BUMP"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 0.5
+                }
+              }
+            ]
+          }
+        },
+        {
           "type": "deadline",
           "data": {
             "commands": [
               {
                 "type": "path",
                 "data": {
-                  "pathName": "IC to FL"
+                  "pathName": "BUMP to FL"
                 }
               },
               {
@@ -26,7 +45,7 @@
         {
           "type": "named",
           "data": {
-            "name": "SCORE_RIGHT_L4"
+            "name": "SCORE_LEFT_L4"
           }
         },
         {
@@ -202,7 +221,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "LP to B"
+                        "pathName": "LP to FLR"
                       }
                     }
                   ]
@@ -217,6 +236,12 @@
                       "data": {
                         "name": "IDLE"
                       }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "PREP_ELEVATOR"
+                      }
                     }
                   ]
                 }
@@ -227,7 +252,7 @@
         {
           "type": "named",
           "data": {
-            "name": "SCORE_LEFT_L2"
+            "name": "SCORE_RIGHT_L4"
           }
         },
         {
@@ -235,15 +260,15 @@
           "data": {
             "commands": [
               {
-                "type": "named",
+                "type": "path",
                 "data": {
-                  "name": "AUTO_END"
+                  "pathName": "FL to LP"
                 }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "BACKOFF"
+                  "name": "AUTO_END"
                 }
               },
               {

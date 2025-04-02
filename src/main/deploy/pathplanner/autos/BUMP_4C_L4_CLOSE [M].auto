@@ -5,13 +5,32 @@
     "data": {
       "commands": [
         {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "BUMP"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 0.5
+                }
+              }
+            ]
+          }
+        },
+        {
           "type": "deadline",
           "data": {
             "commands": [
               {
                 "type": "path",
                 "data": {
-                  "pathName": "IC to FLL"
+                  "pathName": "BUMP to FL"
                 }
               },
               {
@@ -40,7 +59,13 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "FLL to LP"
+                        "pathName": "FL to LP"
+                      }
+                    },
+                    {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 0.05
                       }
                     },
                     {
@@ -107,6 +132,12 @@
                       }
                     },
                     {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 0.05
+                      }
+                    },
+                    {
                       "type": "named",
                       "data": {
                         "name": "DRIVE_FORWARD"
@@ -170,6 +201,12 @@
                       }
                     },
                     {
+                      "type": "wait",
+                      "data": {
+                        "waitTime": 0.05
+                      }
+                    },
+                    {
                       "type": "named",
                       "data": {
                         "name": "DRIVE_FORWARD"
@@ -184,7 +221,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "LP to FLR"
+                        "pathName": "LP to B"
                       }
                     }
                   ]
@@ -198,12 +235,6 @@
                       "type": "named",
                       "data": {
                         "name": "IDLE"
-                      }
-                    },
-                    {
-                      "type": "named",
-                      "data": {
-                        "name": "CORAL_COAST"
                       }
                     },
                     {
@@ -231,7 +262,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "FLR to LP"
+                  "pathName": "B to LP"
                 }
               },
               {

@@ -48,6 +48,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import frc.robot.Constants.Mode;
 import frc.robot.Constants.ScoringLevel;
 import frc.robot.Constants.kArmPivot;
@@ -117,7 +118,7 @@ public class RobotContainer {
     // Commands
     protected final Command telopAutoCommand;
   
-    private ScoringLevel selectedScoringLevel = ScoringLevel.LEVEL1;
+    private ScoringLevel selectedScoringLevel = ScoringLevel.LEVEL4;
 
     // Controller
     private final CommandXboxController primaryController   = new CommandXboxController(0);
@@ -362,17 +363,17 @@ public class RobotContainer {
 
         double degrees = targetAngle.in(Degrees);
         if (degrees > -120 && degrees <= -60)
-            AutoCommands.target = kReefPosition.CLOSE;
-        else if (degrees > -60 && degrees <= 0)
-            AutoCommands.target = kReefPosition.CLOSE_LEFT;
-        else if (degrees > 0 && degrees <= 60)
-            AutoCommands.target = kReefPosition.FAR_LEFT;
-        else if (degrees > 60 && degrees <= 120)
             AutoCommands.target = kReefPosition.FAR;
-        else if (degrees > 120 && degrees <= 180)
+        else if (degrees > -60 && degrees <= 0)
             AutoCommands.target = kReefPosition.FAR_RIGHT;
-        else
+        else if (degrees > 0 && degrees <= 60)
             AutoCommands.target = kReefPosition.CLOSE_RIGHT;
+        else if (degrees > 60 && degrees <= 120)
+            AutoCommands.target = kReefPosition.CLOSE;
+        else if (degrees > 120 && degrees <= 180)
+            AutoCommands.target = kReefPosition.CLOSE_LEFT;
+        else
+            AutoCommands.target = kReefPosition.FAR_LEFT;
 
         Logger.recordOutput("Scoring Position", AutoCommands.target);
     }
@@ -467,8 +468,7 @@ public class RobotContainer {
                             return AlignHelper.getClosestL1(sys_drive.getBlueSidePose(), kClosestType.DISTANCE)
                             .transformBy(new Transform2d(Feet.of(0.8).in(Meters), 0, new Rotation2d()));
                         else
-                            return AlignHelper.getClosestBranch(sys_drive.getBlueSidePose(), kClosestType.DISTANCE, side)
-                            .transformBy(new Transform2d(-Feet.of(1.0).in(Meters), 0, new Rotation2d()));
+                            return AlignHelper.getClosestBranch(sys_drive.getBlueSidePose(), kClosestType.DISTANCE, side);
                     },
 
                     () -> (level == null ? selectedScoringLevel : level) == ScoringLevel.LEVEL4 
@@ -569,6 +569,9 @@ public class RobotContainer {
                 Commands.run(() -> sys_drive.pointWheelsToward(Rotation2d.fromDegrees(-60)), sys_drive).withTimeout(3.0)
             )
         );
+
+        DebugCommand.register("CORAL COAST", Commands.runOnce(sys_endEffector::coast));
+        DebugCommand.register("CORAL BRAKE", Commands.runOnce(sys_endEffector::brake));
 
         // NAMED COMMANDS
         NamedCommands.registerCommand(
@@ -681,9 +684,13 @@ public class RobotContainer {
             )
         );
       
-        NamedCommands.registerCommand("END_WHEN_COLLECTED", Commands.waitUntil(sys_endEffector::coralDetected).withTimeout(1.75));
+        // NamedCommands.registerCommand("END_WHEN_COLLECTED", Commands.waitUntil(sys_endEffector::coralDetected).withTimeout(1.75));
+        NamedCommands.registerCommand("END_WHEN_COLLECTED", Commands.waitUntil(() ->
+            sys_endEffector.getCurrent() >= 32 || sys_endEffector.coralDetected()
+        ));
 
         NamedCommands.registerCommand("DRIVE_FORWARD", Commands.runOnce(() -> sys_drive.driveForward(-0.75), sys_drive));
+        NamedCommands.registerCommand("BUMP", Commands.runOnce(() -> sys_drive.driveForward(-2.0), sys_drive));
 
         NamedCommands.registerCommand("REMOVE_ALGAE", 
             AutoCommands.automaticAlgae(sys_drive, sys_endEffector, sys_elevator, sys_armPivot)
@@ -691,6 +698,8 @@ public class RobotContainer {
         );
 
         NamedCommands.registerCommand("BACKOFF", AutoCommands.backOffFromAlgae(sys_drive, new Rotation2d()));
+
+        NamedCommands.registerCommand("CORAL_COAST", Commands.runOnce(sys_endEffector::coast));
 
         NamedCommands.registerCommand("AUTO_END", AutoTimer.end(kAuto.PRINT_AUTO_TIME));
     }
@@ -745,13 +754,13 @@ public class RobotContainer {
         //                                         new Rotation2d())),
         //                         sys_drive).ignoringDisable(true));
 
-        // primaryController
-        //     .back()
-        //     .or(() -> secondaryController.getHID().getBackButton())
-        //         .whileFalse(
-        //             Commands.runOnce(() -> isTelopAuto = !isTelopAuto)
-        //                 .andThen(telopAutoCommand)
-        //         );
+        primaryController
+            .back()
+            .or(() -> secondaryController.getHID().getBackButton())
+                .whileFalse(
+                    Commands.runOnce(() -> isTelopAuto = !isTelopAuto)
+                        .andThen(telopAutoCommand)
+                );
 
         primaryController.a()
             .onTrue(
@@ -795,7 +804,8 @@ public class RobotContainer {
                     ),
                     AutoCommands.automaticAlgae(sys_drive, sys_endEffector, sys_elevator, sys_armPivot),
                     sys_endEffector::coralDetected
-                ).finallyDo(() -> primaryController.setRumble(RumbleType.kBothRumble, 0.0))
+                ).withInterruptBehavior(InterruptionBehavior.kCancelIncoming)
+                .finallyDo(() -> primaryController.setRumble(RumbleType.kBothRumble, 0.0))
             )
             .onFalse(new IdleCommand(sys_elevator, sys_armPivot, sys_endEffector));
 
@@ -846,6 +856,14 @@ public class RobotContainer {
                     )
                 );
 
+        primaryController.leftBumper()
+            .and(() -> isTelopAuto)
+            .onTrue(Commands.runOnce(() -> AutoCommands.scoreRight.setBoolean(false)).ignoringDisable(true));
+
+        primaryController.rightBumper()
+            .and(() -> isTelopAuto)
+            .onTrue(Commands.runOnce(() -> AutoCommands.scoreRight.setBoolean(true )).ignoringDisable(true));
+
         primaryController.povLeft()
             .and(() -> !isTelopAuto)
             .whileTrue(
@@ -856,12 +874,12 @@ public class RobotContainer {
             );
 
         primaryController.povUp()
-            .onTrue(sys_endEffector.setVoltage(kEndEffector.IDLE_VOLTAGE))
-            .onFalse(sys_endEffector.setVoltage(0.0));
+            .onTrue(sys_endEffector.setVoltage(kEndEffector.IDLE_VOLTAGE, false))
+            .onFalse(sys_endEffector.setVoltage(0.0, false));
 
         primaryController.povDown()
-            .onTrue(sys_endEffector.setVoltage(-kEndEffector.IDLE_VOLTAGE))
-            .onFalse(sys_endEffector.setVoltage(0.0));
+            .onTrue(sys_endEffector.setVoltage(-kEndEffector.IDLE_VOLTAGE, false))
+            .onFalse(sys_endEffector.setVoltage(0.0, false));
 
         // SECONDARY CONTROLLER
 

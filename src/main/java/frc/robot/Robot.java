@@ -130,10 +130,19 @@ public class Robot extends LoggedRobot {
             ).ignoringDisable(true)
         );
 
-    new Trigger(() -> matchTime <= 0.25)
-        .and(() -> matchTime != -1.0)
+    new Trigger(() -> matchTime <= 0.5)
         .and(DriverStation::isTeleopEnabled)
-        .onTrue(robotContainer.sys_endEffector.setVoltage(ScoringLevel.LEVEL4.voltage));
+        .onTrue(
+            Commands.either(
+                Commands.runOnce(() ->
+                    robotContainer.sys_endEffector.setVoltage(ScoringLevel.LEVEL4.voltage, false)
+                ),
+                Commands.runOnce(() ->
+                    robotContainer.sys_endEffector.setVoltage(ScoringLevel.LEVEL1.voltage, false)
+                ),
+                robotContainer.sys_endEffector::coralDetected
+            )
+        );
   }
 
   /** This function is called periodically during all modes. */
@@ -213,6 +222,7 @@ public class Robot extends LoggedRobot {
     autoStartingConfigAlert.set(false);
 
     robotContainer.sys_drive.brakeMode();
+    robotContainer.sys_endEffector.brake();
   }
 
   /** This function is called periodically during operator control. */

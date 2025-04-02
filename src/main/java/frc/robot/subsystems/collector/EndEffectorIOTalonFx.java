@@ -87,6 +87,16 @@ public class EndEffectorIOTalonFx implements EndEffectorIO {
         return deviceCurrent.getValueAsDouble();
     }
 
+    @Override
+    public void coastMode() {
+        endEffectorMotor.setNeutralMode(NeutralModeValue.Coast);
+    }
+
+    @Override
+    public void brakeMode() {
+        endEffectorMotor.setNeutralMode(NeutralModeValue.Brake);
+    }
+
     @Override 
     public void updateInputs(EndEffectorInputs inputs) {
         inputs.endEffectorConnection = BaseStatusSignal.refreshAll(

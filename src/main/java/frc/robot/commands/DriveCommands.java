@@ -273,10 +273,16 @@ public class DriveCommands {
             Logger.recordOutput("AutoAlign/Angle To Alignment [degrees]", difference.in(Degrees));
             Logger.recordOutput("AutoAlign/Velocity [m per s]", robotSpeed.in(MetersPerSecond));
         
-            return
-                distance.lte(kAutoAlign.TRANSLATION_TOLERANCE) &&
-                difference.lte(kAutoAlign.ROTATION_TOLERANCE) &&
-                robotSpeed.lte(kAutoAlign.VELOCITY_TOLERANCE);
+            if (DriverStation.isAutonomous())
+                return
+                    distance.lte(kAutoAlign.TRANSLATION_TOLERANCE) &&
+                    difference.lte(kAutoAlign.ROTATION_TOLERANCE) &&
+                    robotSpeed.lte(kAutoAlign.VELOCITY_TOLERANCE);
+            else
+                return
+                    distance.lte(kAutoAlign.TRANSLATION_TOLERANCE) &&
+                    difference.lte(kAutoAlign.ROTATION_TOLERANCE) &&
+                    robotSpeed.lte(kAutoAlign.AUTO_VELOCITY_TOLERANCE);
         }
     ).andThen(
         Commands.runOnce(() -> {

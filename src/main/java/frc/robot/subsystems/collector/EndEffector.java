@@ -73,7 +73,7 @@ public class EndEffector extends SubsystemBase {
             ).until(this::coralDetected)
             .andThen(
                 setVoltage(2.0),
-                Commands.waitSeconds(0.125)
+                Commands.waitSeconds(0.175)
             ).unless(this::coralDetected)
             .finallyDo(() -> io.setVoltage(0.0));
 
@@ -119,10 +119,17 @@ public class EndEffector extends SubsystemBase {
     }
 
     public Command setVoltage(double voltage){
-        return Commands.runOnce(
-            () -> io.setVoltage(voltage), 
-            this
-        );
+        return setVoltage(voltage, true);
+    }
+
+    public Command setVoltage(double voltage, boolean interupt) {
+        if (interupt)
+            return Commands.runOnce(
+                () -> io.setVoltage(voltage), 
+                this
+            );
+
+        return Commands.runOnce(() -> io.setVoltage(voltage));
     }
 
     public boolean coralDetected(){
@@ -131,6 +138,14 @@ public class EndEffector extends SubsystemBase {
 
     public double getCurrent() {
         return io.getMotorCurrent();
+    }
+
+    public void coast() {
+        io.coastMode();
+    }
+
+    public void brake() {
+        io.brakeMode();
     }
 
     @Override

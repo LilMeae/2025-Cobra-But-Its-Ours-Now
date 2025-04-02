@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "IC to FL"
+                  "pathName": "IC to FLL"
                 }
               },
               {
@@ -26,7 +26,7 @@
         {
           "type": "named",
           "data": {
-            "name": "SCORE_RIGHT_L4"
+            "name": "SCORE_LEFT_L4"
           }
         },
         {
@@ -40,7 +40,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "FL to LP"
+                        "pathName": "FLL to LP"
                       }
                     },
                     {
@@ -221,6 +221,12 @@
                     {
                       "type": "named",
                       "data": {
+                        "name": "CORAL_COAST"
+                      }
+                    },
+                    {
+                      "type": "named",
+                      "data": {
                         "name": "PREP_ELEVATOR"
                       }
                     }
@@ -241,15 +247,15 @@
           "data": {
             "commands": [
               {
-                "type": "named",
+                "type": "path",
                 "data": {
-                  "name": "AUTO_END"
+                  "pathName": "B to LP"
                 }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "BACKOFF"
+                  "name": "AUTO_END"
                 }
               },
               {
