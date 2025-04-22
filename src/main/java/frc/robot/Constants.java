@@ -88,9 +88,10 @@ public final class Constants {
     public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_SLOW = MetersPerSecondPerSecond.of(8.00);
     public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_FAST = MetersPerSecondPerSecond.of(16.0);
 
+    // WHOS IN THE HOUSE??
     public static final Distance TRANSLATION_TOLERANCE;
     public static final Angle    ROTATION_TOLERANCE   ;
-    public static final LinearVelocity VELOCITY_TOLERANCE = MetersPerSecond.of(0.1);
+    public static final LinearVelocity VELOCITY_TOLERANCE = MetersPerSecond.of(0.18);
     public static final LinearVelocity AUTO_VELOCITY_TOLERANCE = MetersPerSecond.of(0.15);
     static {
         if (TUNNING) {
@@ -202,15 +203,15 @@ public final class Constants {
     public static final Angle MOVEMENT_SETPOINT = Degrees.of(88);
     public static final Angle PICKUP_ANGLE  = Degrees.of(104.5);
 
-    public static final Angle L1_PICKUP_ANGLE = Degrees.of(86);
+    public static final Angle L1_PICKUP_ANGLE = Degrees.of(86.5);
 
     public static final PIDConstants SIMULATED_PID_VALUES = new PIDConstants(3.25, 0.0, 0.3);
   }
 
     public static enum ScoringLevel {
         LEVEL1(      Meters.of(0.010), Degrees.of(66.0), -3.0),
-        LEVEL2(      Meters.of(0.17), Degrees.of(86.0), 6.0),
-        LEVEL3(      Meters.of(0.37), Degrees.of(86.0), 6.0),
+        LEVEL2(      Meters.of(0.17), Degrees.of(86.0), 5.0),
+        LEVEL3(      Meters.of(0.37), Degrees.of(86.0), 5.0),
         LEVEL4(      Meters.of(0.665), Degrees.of(87.0), 7.5),
 
         LEVEL2_ALGAE(Meters.of(0.220), Degrees.of(70.5), 0.0), // No voltages, stored in algae voltage

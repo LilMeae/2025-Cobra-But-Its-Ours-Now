@@ -686,8 +686,8 @@ public class RobotContainer {
       
         // NamedCommands.registerCommand("END_WHEN_COLLECTED", Commands.waitUntil(sys_endEffector::coralDetected).withTimeout(1.75));
         NamedCommands.registerCommand("END_WHEN_COLLECTED", Commands.waitUntil(() ->
-            sys_endEffector.getCurrent() >= 32 || sys_endEffector.coralDetected()
-        ));
+            sys_endEffector.getCurrent() >= 30 || sys_endEffector.coralDetected()
+        ).withTimeout(2.0));
 
         NamedCommands.registerCommand("DRIVE_FORWARD", Commands.runOnce(() -> sys_drive.driveForward(-0.75), sys_drive));
         NamedCommands.registerCommand("BUMP", Commands.runOnce(() -> sys_drive.driveForward(-2.0), sys_drive));
@@ -754,13 +754,13 @@ public class RobotContainer {
         //                                         new Rotation2d())),
         //                         sys_drive).ignoringDisable(true));
 
-        primaryController
-            .back()
-            .or(() -> secondaryController.getHID().getBackButton())
-                .whileFalse(
-                    Commands.runOnce(() -> isTelopAuto = !isTelopAuto)
-                        .andThen(telopAutoCommand)
-                );
+        // primaryController
+        //     .back()
+        //     .or(() -> secondaryController.getHID().getBackButton())
+        //         .whileFalse(
+        //             Commands.runOnce(() -> isTelopAuto = !isTelopAuto)
+        //                 .andThen(telopAutoCommand)
+        //         );
 
         primaryController.a()
             .onTrue(
@@ -783,7 +783,7 @@ public class RobotContainer {
                 Commands.sequence(
                     sys_endEffector.setVoltage(2.5),
                     sys_armPivot.moveArm(kArmPivot.MOVEMENT_SETPOINT),
-                    sys_elevator.elevatorGo(Meters.of(0.145)),
+                    sys_elevator.elevatorGo(Meters.of(0.123)),
                     sys_armPivot.moveArm(kArmPivot.L1_PICKUP_ANGLE)
                 )
             ).onFalse(
