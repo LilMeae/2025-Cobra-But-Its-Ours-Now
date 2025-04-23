@@ -22,16 +22,17 @@ import frc.robot.Constants.kEndEffector;
 
 public class EndEffectorIOTalonFx implements EndEffectorIO {
     
+    // Motor and motor configs
     private TalonFX endEffectorMotor;
     private TalonFXConfigurator endEffectorConfig;
     private CurrentLimitsConfigs currentConfig;
-
+    // StatusSignals
     private StatusSignal<Voltage> deviceVoltage;
     private StatusSignal<Current> deviceCurrent;
     private StatusSignal<Temperature> deviceTemp;
     private StatusSignal<AngularVelocity> deviceVelocity;
     private StatusSignal<Angle> devicePosition;
-    
+    // ToF Sensor
     private final TimeOfFlight tof = new TimeOfFlight(kEndEffector.TIMOFFLIGHT_SENSORID);
 
     public EndEffectorIOTalonFx(int ID) {
@@ -68,35 +69,51 @@ public class EndEffectorIOTalonFx implements EndEffectorIO {
         );
         // Optimize the CanBus
         endEffectorMotor.optimizeBusUtilization();
-
+        // Set ToF ranging mode (Short/Medium/Long)
         tof.setRangingMode(RangingMode.Short, 50);
     }
 
+    /**
+     * Set motor voltage
+     * 
+     */
     @Override 
     public void setVoltage(double volts) {
         endEffectorMotor.setVoltage(volts);
     }
 
+    /**
+     * Get the distance the time of flight can see in millimeters
+     */
     @Override
     public Distance getTofRange(){
         return Millimeters.of(tof.getRange());
     }
 
+    /**
+     * Get motor current
+     */
     @Override
     public double getMotorCurrent() {
         return deviceCurrent.getValueAsDouble();
     }
-
+    /**
+     * Set motor to coast mode
+     */
     @Override
     public void coastMode() {
         endEffectorMotor.setNeutralMode(NeutralModeValue.Coast);
     }
-
+    /**
+     * Set motor to brake mode
+     */
     @Override
     public void brakeMode() {
         endEffectorMotor.setNeutralMode(NeutralModeValue.Brake);
     }
-
+    /**
+     * Update the inputs for logging with the latest data from the motor
+     */
     @Override 
     public void updateInputs(EndEffectorInputs inputs) {
         inputs.endEffectorConnection = BaseStatusSignal.refreshAll(

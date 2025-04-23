@@ -6,11 +6,16 @@ public class EndEffectorIOSim implements EndEffectorIO {
 
     public EndEffectorIOSim() {}
 
+    /**
+     * Set voltage to volts
+     */
     @Override
     public void setVoltage(double volts) {
         voltage = volts;
     }
-
+    /**
+     * Make the logged volts to the voltage
+     */
     @Override
     public void updateInputs(EndEffectorInputs inputs) {
         inputs.endEffectorVolts = voltage;
