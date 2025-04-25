@@ -16,6 +16,9 @@ import frc.robot.Constants.kAutoAlign;
 import frc.robot.Constants.kAutoAlign.kReef;
 import frc.robot.Constants.kAutoAlign.kStation;
 
+/**
+ * @author Alexander Szura
+ */
 public class AlignHelper {
 
     public static enum kClosestType {
@@ -39,30 +42,70 @@ public class AlignHelper {
         timer = kAutoAlign.TIME_ADJUSTMENT_TIMEOUT;
     }
 
+    /**
+     * Gets the algae height based of the cloest reef
+     * @param robotPose the robot pose
+     * @return algae scoring height
+     */
     public static ScoringLevel getAlgaeHeight(Pose2d robotPose) {
         return kReef.ALGAE_HEIGHTS.getOrDefault(getClosestReef(robotPose), ScoringLevel.LEVEL2_ALGAE);
     }
 
+    /**
+     * Gets the closest reef face
+     * @param robotPose robot pose
+     * @return The reef face pose
+     */
     public static Pose2d getClosestReef(Pose2d robotPose) {
         return calculator(robotPose, kClosestType.DISTANCE, kReef.TARGETS.values());
     }
 
+    /**
+     * Gets the closest branch based on distance to the robot
+     * @param robotPose the pose of the robot
+     * @return The pose of the branch
+     */
     public static Pose2d getClosestBranch(Pose2d robotPose) {
         return getClosestBranch(robotPose, kClosestType.DISTANCE);
     }
 
+    /**
+     * Gets the closest branch to the robot
+     * @param robotPose the pose of the robot
+     * @param type closest based on distance or rotation
+     * @return The pose of the branch
+     */
     public static Pose2d getClosestBranch(Pose2d robotPose, kClosestType type) {
         return getClosestBranch(robotPose, type, kDirection.BOTH);
     }
 
+    /**
+     * Gets the closest branch to the robot
+     * @param robotPose the pose of the robot
+     * @param type closest based on distance or rotation
+     * @param direction left, right, or both branches
+     * @return The pose of the branch
+     */
     public static Pose2d getClosestBranch(Pose2d robotPose, kClosestType type, kDirection direction) {
         return calculator(robotPose, type, getBranchPoses(direction));
     }
 
+    /**
+     * Gets the closest coral station slot to the robot based on distance
+     * @param robotPose the robot pose
+     * @return the coral station slot's pose
+     */
     public static Pose2d getClosestStation(Pose2d robotPose) {
         return getClosestStation(robotPose, kClosestType.DISTANCE, kDirection.BOTH);
     }
 
+    /**
+     * Gets the closest coral station slot to the robot
+     * @param robotPose the robot pose
+     * @param type closest based on distance or rotation
+     * @param station which station, left or right
+     * @return the coral station slot's pose
+     */
     public static Pose2d getClosestStation(Pose2d robotPose, kClosestType type, kDirection station) {        
         return calculator(robotPose, type, getStationPoses(station));
     }
@@ -71,6 +114,12 @@ public class AlignHelper {
         return getClosestElement(robotPose, kDirection.BOTH);
     }
 
+    /**
+     * Gets the closest field element, stations, branchs, to the robot
+     * @param robotPose The robot pose
+     * @param direction left or right branch/left or right station
+     * @return the closests elements pose
+     */
     public static Pose2d getClosestElement(Pose2d robotPose, kDirection direction) {
         Collection<Pose2d> poses = getStationPoses(direction);
         poses.addAll(getBranchPoses(direction));
@@ -78,6 +127,10 @@ public class AlignHelper {
         return calculator(robotPose, kClosestType.DISTANCE, poses);
     }
 
+    /**
+     * @param station left or right station
+     * @return a collections of all of the slots allowable on the station
+     */
     public static Collection<Pose2d> getStationPoses(kDirection station) {
         List<Pose2d> poses = new ArrayList<>();
         for (int i = -1; i < 4; i++) {
@@ -91,6 +144,10 @@ public class AlignHelper {
         return poses;
     }
 
+    /**
+     * @param branch left or right branch
+     * @return a collection of all of the branch poses
+     */
     public static Collection<Pose2d> getBranchPoses(kDirection branch) {
         List<Pose2d> poses = new ArrayList<>();
         for (Entry<String, Pose2d> entry : kReef.BRANCHES.entrySet()) {
@@ -109,11 +166,25 @@ public class AlignHelper {
         return poses;
     }
 
+    /**
+     * Gets the closest L1 pose for the robot to score on
+     * @param robotPose
+     * @param type
+     * @return
+     */
     public static Pose2d getClosestL1(Pose2d robotPose, kClosestType type) {
         return calculator(robotPose, type, kReef.L1_POSES);
     }
 
+    /**
+     * calculates the closest pose from a colection of poses to the robot pose
+     * @param robotPose the pose of the robot
+     * @param type should it be based on rotation or distance
+     * @param poses the poses to check
+     * @return the closest pose
+     */
     private static Pose2d calculator(Pose2d robotPose, kClosestType type, Collection<Pose2d> poses) {
+        // The robot pose plus a little of where the robot is traveling. Estimates where the driver is trying to go
         Pose2d estimatedPose = robotPose.plus(
             new Transform2d(
                 speeds.vxMetersPerSecond * kAutoAlign.VELOCITY_TIME_ADJUSTEDMENT.in(Seconds),
@@ -149,6 +220,12 @@ public class AlignHelper {
         return closest;
     }
 
+    /**
+     * Calculates rotation difference for rotation2d
+     * @param r1 1st rotation2d
+     * @param r2 2nd rotation2d
+     * @return The angle between them
+     */
     public static Angle rotationDifference(Rotation2d r1, Rotation2d r2) {
         double difference = r1.getRadians() - r2.getRadians();
 

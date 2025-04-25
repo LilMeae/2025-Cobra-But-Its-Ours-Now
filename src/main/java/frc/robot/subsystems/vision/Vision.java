@@ -1,27 +1,22 @@
 package frc.robot.subsystems.vision;
 
 import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-
-// 5409: The Chargers
-// http://github.com/FRC5409
-
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.kVision;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
 
+/**
+ * @author Logan, Alexander Szura team 5409
+ */
 public class Vision extends SubsystemBase {
 
     private final VisionIO io;
     private final VisionInputsAutoLogged inputs;
-
-//    private final GenericEntry sTagCount;
-//    private final Field2d sEstimatedPose;
 
     private final Alert disconnectedAlert = new Alert("Limelight appears to be disconnected. (TIMEOUT)", Alert.AlertType.kError);
     private final Alert tempAlert = new Alert("LL Temp", AlertType.kWarning);
@@ -31,11 +26,6 @@ public class Vision extends SubsystemBase {
         inputs = new VisionInputsAutoLogged();
 
         io.setCameraOffset();
-
-//        ShuffleboardTab tab = Shuffleboard.getTab("Vision");
-//        sTagCount = tab.add("Tag Count", 0).getEntry();
-//        sEstimatedPose = new Field2d();
-//        tab.add("Estimated Pose", sEstimatedPose);
     }
 
     /**
@@ -48,19 +38,23 @@ public class Vision extends SubsystemBase {
         if (estimate == null)
             return;
 
-//        sTagCount.setInteger(estimate.tagCount);
-//        sEstimatedPose.setRobotPose(estimate.pose);
-
         if (estimate.tagCount < kVision.FIDUCIAL_TRUST_THRESHOLD)
             return;
 
         drive.addVisionMeasurement(estimate.pose, estimate.timestampSeconds);
     }
 
+    /**
+     * Sets the rotation of the robot, used for LL MT2
+     * @param rotation The rotation of the robot
+     */
     public void setRotation(Rotation2d rotation) {
         io.setRotation(rotation);
     }
 
+    /**
+     * @return true if vision has a target
+     */
     public boolean hasTarget() {
         return inputs.hasTarget;
     }

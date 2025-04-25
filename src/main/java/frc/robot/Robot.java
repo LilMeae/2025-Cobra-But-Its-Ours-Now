@@ -121,6 +121,7 @@ public class Robot extends LoggedRobot {
 
     VisionIOLimelight.forwardLimelightPorts();
 
+    // Disable of currently running setpoints and command
     new Trigger(DriverStation::isDisabled)
         .onTrue(
             Commands.parallel(
@@ -130,7 +131,8 @@ public class Robot extends LoggedRobot {
             ).ignoringDisable(true)
         );
 
-    new Trigger(() -> matchTime <= 0.5)
+    // Spit out game piece if no time left in match.
+    new Trigger(() -> matchTime <= 0.5) // Note never got this to work...
         .and(DriverStation::isTeleopEnabled)
         .onTrue(
             Commands.either(

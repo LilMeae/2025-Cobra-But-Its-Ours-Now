@@ -3,6 +3,9 @@ package frc.robot.util;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+/**
+ * @deprecated no longer in use
+ */
 public class ControlBoard extends CommandGenericHID {
 
     // TODO: VALIDATE THESE

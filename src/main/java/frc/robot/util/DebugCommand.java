@@ -6,7 +6,12 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 
-public class DebugCommand {   
+/**
+ * A helper class for putting debug command on NetworkTables
+ * @author Alexander Szura team 5409
+ */
+public class DebugCommand {
+
     private static ShuffleboardTab tab;
 
     private DebugCommand() {}
@@ -22,6 +27,13 @@ public class DebugCommand {
         tab.add(name, cmd.withName("DEBUG-" + name).ignoringDisable(true)).withWidget("Command");
     }
 
+    /**
+     * Puts a editable number on NetworkTables
+     * @param <T> The number to putn on NetworkTables
+     * @param name The name to associate the value with
+     * @param defaultValue
+     * @return A supplier of the value
+     */
     @SuppressWarnings("unchecked")
     public static <T> Supplier<T> putNumber(String name, T defaultValue) {
         final GenericEntry entry = tab.add(name, defaultValue).getEntry();

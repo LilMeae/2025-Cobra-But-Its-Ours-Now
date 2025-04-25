@@ -88,7 +88,7 @@ public final class Constants {
     public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_SLOW = MetersPerSecondPerSecond.of(8.00);
     public static final LinearAcceleration MAX_AUTO_ALIGN_ACCELERATION_FAST = MetersPerSecondPerSecond.of(16.0);
 
-    // WHOS IN THE HOUSE??
+    /* ------------ WHO'S IN THE HOUSE?? ------------- */
     public static final Distance TRANSLATION_TOLERANCE;
     public static final Angle    ROTATION_TOLERANCE   ;
     public static final LinearVelocity VELOCITY_TOLERANCE = MetersPerSecond.of(0.18);
@@ -119,6 +119,11 @@ public final class Constants {
       public static final Transform2d LEFT_OFFSET_TO_BRANCH  = new Transform2d(0.35, 0.18, new Rotation2d());
       public static final Transform2d RIGHT_OFFSET_TO_BRANCH = new Transform2d(0.35, -0.18, new Rotation2d());
 
+      /**
+       * Generates a pose that is useable for us of each reef face.
+       * @param rotation The rotation of the face
+       * @return a pose2d of that face
+       */
       private static final Pose2d generatePose(Rotation2d rotation) {
         final double mx = 4.48945;
         final double my = FlippingUtil.fieldSizeY / 2.0;

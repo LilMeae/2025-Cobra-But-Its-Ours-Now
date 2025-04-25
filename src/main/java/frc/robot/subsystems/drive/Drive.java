@@ -283,12 +283,20 @@ public class Drive extends SubsystemBase {
     }
   }
 
+  /**
+   * Drives the robot forward (robot relative)
+   * @param speedMetersPerSecond the speed to drive the robot, negative for backward
+   */
   public void driveForward(double speedMetersPerSecond) {
     for (int i = 0; i < 4; i++) {
         modules[i].runSetpoint(new SwerveModuleState(speedMetersPerSecond, new Rotation2d()));
     }
   }
 
+  /**
+   * Point the wheels towards what angle (robot relative)
+   * @param angle The angle to point the wheels at
+   */
   public void pointWheelsToward(Rotation2d angle) {
     for (int i = 0; i < 4; i++) {
         modules[i].runSetpoint(new SwerveModuleState(0, angle));
@@ -315,6 +323,9 @@ public class Drive extends SubsystemBase {
     stop();
   }
 
+  /**
+   * Set coast mode for turn and drive motors
+   */
   public void coastMode() {
     for (Module module : modules) {
       module.driveNeutralMode(NeutralModeValue.Coast);
@@ -322,6 +333,9 @@ public class Drive extends SubsystemBase {
     }
   }
 
+  /**
+   * Set brake mode for turn and drive motors
+   */
   public void brakeMode() {
     for (Module module : modules) {
       module.driveNeutralMode(NeutralModeValue.Brake);
@@ -329,6 +343,9 @@ public class Drive extends SubsystemBase {
     }
   }
 
+  /**
+   * @return if the robot is a safe distance away from the reef to not climb it
+   */
   public static boolean isSafe() {
     return globalPose.getTranslation().getDistance(new Translation2d(4.48945, FlippingUtil.fieldSizeY / 2.0)) >= 1.45;
   }

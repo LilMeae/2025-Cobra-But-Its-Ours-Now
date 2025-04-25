@@ -7,7 +7,12 @@ import edu.wpi.first.util.struct.Struct;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 
+/**
+ * Struct helper simplfies publishing structs for NetworkTables
+ * @author Alexander Szura team 5409
+ */
 public final class StructHelper {
+
   private static final ArrayList<Pair<StructPublisher<?>, Supplier<?>>> VALUES = new ArrayList<>();
 
   private StructHelper() {}

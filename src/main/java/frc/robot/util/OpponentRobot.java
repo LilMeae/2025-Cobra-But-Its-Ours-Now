@@ -24,6 +24,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+
+/**
+ * A class that creates a simple opponent robot to play defence
+ * @author Alexander Szura team 5409
+ */
 public class OpponentRobot extends SubsystemBase {
 
     private static final LinearVelocity MAX_ROBOT_SPEED = MetersPerSecond.of(4.56);
@@ -37,7 +42,7 @@ public class OpponentRobot extends SubsystemBase {
     public OpponentRobot(Pose2d fieldPose) {
         if (opponentConfig == null) {
             opponentConfig = DriveTrainSimulationConfig.Default()
-            .withGyro(() -> new GyroSimulation(0.0, 0.0))
+            .withGyro(() -> new GyroSimulation(0.0, 0.0)) // No drift because no vision
             .withRobotMass(Pounds.of(114.9))
             .withTrackLengthTrackWidth(Meters.of(0.578), Meters.of(0.578))
             .withBumperSize(Meters.of(0.881), Meters.of(0.881))
@@ -62,6 +67,11 @@ public class OpponentRobot extends SubsystemBase {
         SimulatedArena.getInstance().addDriveTrainSimulation(sim);
     }
 
+    /**
+     * Normal joystick drive command to drive the robot manually
+     * @param controller the controller to drive with
+     * @return A command that drives the robot
+     */
     public Command joystickDrive(CommandXboxController controller) {
         return Commands.run(() -> {
             final ChassisSpeeds joystickSpeeds = new ChassisSpeeds(
@@ -73,13 +83,19 @@ public class OpponentRobot extends SubsystemBase {
             final ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
                     joystickSpeeds,
                     driveSimulation.getActualPoseInSimulationWorld().getRotation()
-                    // .plus(Rotation2d.k180deg)
+                    // .plus(Rotation2d.k180deg) // Uncomment if running mutliple camera angles
             );
 
             driveSimulation.runChassisSpeeds(fieldRelativeSpeeds, new Translation2d(), true, true);
         }, this);
     }
 
+    /**
+     * Follows a path from pathplanner for the robot to follow 
+     * @param path The path planner path to follow
+     * @return a command that follows the path
+     * @implNote Not tested
+     */
     public Command followDrive(PathPlannerPath path) {
         final PPHolonomicDriveController driveController =
             new PPHolonomicDriveController(new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0));

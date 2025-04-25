@@ -199,6 +199,14 @@ public class DriveCommands {
         // Reset PID controller when command starts
         .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
   }
+    /**
+     * Aligns to a specifc point on the field
+     * @param drive The drive subsystem
+     * @param target the target position
+     * @param maxVelo the max velocity of the robot
+     * @param maxAccel the max acceleration of the robot
+     * @return A command that will automatically align to a point on the field
+     */
     @SuppressWarnings("resource")
     public static Command alignToPoint(Drive drive, Supplier<Pose2d> target, Supplier<LinearVelocity> maxVelo, Supplier<LinearAcceleration> maxAccel) {
         ProfiledController translationController =
@@ -218,6 +226,7 @@ public class DriveCommands {
 
         return Commands.sequence(
             Commands.runOnce(() -> {
+                // Reset speeds of the controller
                 aligned = false;
 
                 ChassisSpeeds speeds = drive.getFieldRelativeSpeeds();
@@ -226,14 +235,16 @@ public class DriveCommands {
                 angleController.reset();
             }),
             Commands.run(() -> {
+                // Update the contraints of the controller
                 translationController.setContraints(maxVelo.get().in(MetersPerSecond), maxAccel.get().in(MetersPerSecondPerSecond));
                 
                 Pose2d robotPose = drive.getPose();
                 Pose2d targetPose = target.get();
 
+                // Red alliance flip
                 if (AutoBuilder.shouldFlip())
                     targetPose = FlippingUtil.flipFieldPose(targetPose);
-        
+                
                 double xDiff = targetPose.getX() - robotPose.getX();
                 double yDiff = targetPose.getY() - robotPose.getY();
 
@@ -244,7 +255,8 @@ public class DriveCommands {
                 double omega =
                 angleController.calculate(
                     robotPose.getRotation().getRadians(), targetPose.getRotation().getRadians());
-                                                                                           
+                                            
+                // Trig cacl for converting back to field relative
                 double speedX = speed * (xDiff / totalDiff);
                 double speedY = speed * (yDiff / totalDiff);
                 
@@ -292,6 +304,12 @@ public class DriveCommands {
     );
     }
 
+    /**
+     * Aligns to a specifc point on the field using max auto align velocity and accel
+     * @param drive drive subsystem
+     * @param target the target pose
+     * @return An auto align Command
+     */
     public static Command alignToPoint(Drive drive, Supplier<Pose2d> target) {
         return alignToPoint(drive, target, () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_FAST, () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_FAST);
     }

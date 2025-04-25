@@ -79,6 +79,15 @@ public class AutoCommands {
         stationChooser.addOption(       "Right",     kDirection.RIGHT);
     }
 
+    /**
+     * Path finds to specific point on the field
+     * @param drive the drive subsystem
+     * @param targetPose the target pose on the field
+     * @param acceptVelocity if it should take in your velocity
+     * @param selector if this command should be a selector command, meaning if the target pose changes should the path change or wait to finish
+     * @return A command that path finds
+     * @apiNote Only used for telop auto
+     */
     public static Command pathfindTo(Drive drive, Supplier<Pose2d> targetPose, boolean acceptVelocity, boolean selector) {
         List<Pose2d> poses = new ArrayList<>();
         poses.addAll(AlignHelper.getStationPoses(kDirection.BOTH));
@@ -150,6 +159,11 @@ public class AutoCommands {
             return CaseCommand.buildCondtional(suppliers, commands, Commands.print("ERROR WITH AUTO-TELE"));
     }
 
+    /**
+     * Pathfinds to the nearest coral station
+     * @param drive the drive subsystem
+     * @return A command that drives to the nearest station
+     */
     public static Command pathFindToNearestStation(Drive drive) {
         return pathfindTo(
             drive, 
@@ -164,6 +178,12 @@ public class AutoCommands {
         .andThen(Commands.waitSeconds(0.5));
     }
 
+    /**
+     * Path finds to the nearest reef face
+     * @param drive the drive station
+     * @param reef a supplier of which face to pathfind to
+     * @return
+     */
     public static Command pathFindToReef(Drive drive, Supplier<kReefPosition> reef) {
         return pathfindTo(
             drive,
@@ -176,6 +196,12 @@ public class AutoCommands {
         );
     }
 
+    /**
+     * Aligns to the nearest left or right branch
+     * @param drive drive subsystem
+     * @param direction the left or right branch to score on
+     * @return A command that aligns to the given branch
+     */
     public static Command alignToBranch(Drive drive, Supplier<kDirection> direction) {
         return DriveCommands.alignToPoint(
             drive, 
@@ -183,6 +209,11 @@ public class AutoCommands {
         ).beforeStarting(() -> AlignHelper.reset(new ChassisSpeeds()));
     }
 
+    /**
+     * Aligns to the nearest algae position
+     * @param drive drive subsystem
+     * @return A command that aligns to algae removale position
+     */
     public static Command alignToAlgae(Drive drive) {
         return DriveCommands.alignToPoint(
             drive,
@@ -190,6 +221,12 @@ public class AutoCommands {
         ).beforeStarting(() -> AlignHelper.reset(new ChassisSpeeds()));
     }
 
+    /**
+     * Backs off 0.385 metters from the facee of the reef
+     * @param drived rive subsystem
+     * @param rotationOffset rotation offset from the algae, this should usually be 0
+     * @return A backoff command
+     */
     public static Command backOffFromAlgae(Drive drive, Rotation2d rotationOffset) {
         return DriveCommands.alignToPoint(
             drive, 
@@ -197,6 +234,14 @@ public class AutoCommands {
         ).beforeStarting(() -> AlignHelper.reset(new ChassisSpeeds()));
     }
 
+    /**
+     * Fully automatic algae removal. This will account for ALL robot states: if the robot is too close, if its perfect, it the elevator is too high. It will also account for algae height
+     * @param sys_drive drive subsystem
+     * @param sys_endEffector end effector subsystem
+     * @param sys_elevator elevator subsystem
+     * @param sys_armPivot pivot subsystem
+     * @return A command that automatically removes algae from the nearest reef face
+     */
     public static Command automaticAlgae(Drive sys_drive, EndEffector sys_endEffector, Elevator sys_elevator, ArmPivot sys_armPivot) {
         Command idealAlgae = 
             Commands.sequence(
@@ -211,6 +256,7 @@ public class AutoCommands {
                 )
             );
 
+        // Used to be used but then we added L1 scoring which removed this option
         // Command L4Algae = 
         //     Commands.sequence(
         //         AutoCommands.alignToAlgae(sys_drive),
@@ -254,6 +300,17 @@ public class AutoCommands {
         );
     }
 
+    /**
+     * Full auto command
+     * @param drive drive subsystem
+     * @param sys_elevator elevator subsystem
+     * @param sys_pivot pivot subsystem
+     * @param sys_endeffector end effector subsystem
+     * @param scoringCommand the score command
+     * @param isAlgae if removing algae
+     * @param waitBeforeScoring if the robot should wait before scoring
+     * @return Full auto command
+     */
     public static Command telopAutoCommand(Drive drive, Elevator sys_elevator, ArmPivot sys_pivot, EndEffector sys_endeffector, Command scoringCommand, BooleanSupplier isAlgae, BooleanSupplier waitBeforeScoring) {
         return Commands.sequence(
             Commands.parallel(

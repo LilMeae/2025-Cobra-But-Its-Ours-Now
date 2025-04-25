@@ -3,7 +3,6 @@ package frc.robot.subsystems.vision;
 import static edu.wpi.first.units.Units.*;
 
 import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.net.PortForwarder;
@@ -16,6 +15,9 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.DebugCommand;
 import frc.robot.util.LimelightHelpers;
 
+/**
+ * @author Logan, Alexander Szura team 5409
+ */
 public class VisionIOLimelight implements VisionIO {
 
     public enum kIMU_MODE {
@@ -87,10 +89,10 @@ public class VisionIOLimelight implements VisionIO {
             inputs.ramUsage = system[1];
             inputs.sysTemp  = system[0];
         } catch (Exception e) {
-            inputs.fps = 0.0;
-            inputs.cpuTemp = 0.0;
-            inputs.ramUsage = 0.0;
-            inputs.sysTemp = 0.0;
+            inputs.fps       = -1.0;
+            inputs.cpuTemp   = -1.0;
+            inputs.ramUsage  = -1.0;
+            inputs.sysTemp   = -1.0;
         }
 
         // check if disconnected by comparing prx latency
@@ -130,6 +132,7 @@ public class VisionIOLimelight implements VisionIO {
                 robotYaw = LimelightHelpers.getBotPoseEstimate_wpiBlue(kVision.CAM_NAME).pose.getRotation();
                 logMode("FUSED");
             } else {
+                // Never got internal gyro to work properly, wasn't resetting... Looking back at this might of been because we were throtling the LL.
                 // LimelightHelpers.SetIMUMode(kVision.CAM_NAME, kIMU_MODE.INTERNAL.ID);
                 // logMode("INTERNAL");
             }
@@ -137,6 +140,7 @@ public class VisionIOLimelight implements VisionIO {
 
         LimelightHelpers.SetRobotOrientation(kVision.CAM_NAME, robotYaw.getDegrees(), 0, 0, 0, 0, 0);
 
+        // Issue with resetting it's position in auto. If it sees a tag then it would reset back to the wrong position, this would happen only when the LL was throttled.
         return LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(kVision.CAM_NAME);
     }
 
