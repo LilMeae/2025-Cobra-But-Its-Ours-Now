@@ -18,6 +18,8 @@ public class ElevatorIOSim implements ElevatorIO {
     private PIDController PID;
 
     public ElevatorIOSim() {
+
+        //Creating sim elevator object
         elevatorSim = new ElevatorSim(
             DCMotor.getFalcon500(2), 
             kElevator.kGearing, 
@@ -33,23 +35,38 @@ public class ElevatorIOSim implements ElevatorIO {
 
     }
 
+    /**
+     * Set voltage of the motor to assigned voltage 
+     *@param voltage voltage value
+     */
     @Override
     public void setMotorVoltage(double voltage) {
         elevatorSim.setInputVoltage(voltage);
     }
 
+    /**
+     * Stops the motor
+     */
     @Override
     public void stopMotor() {
         elevatorSim.setInputVoltage(0.0);
         running = false;
     }
 
+    /**
+     * sets the elevator to the assigned setpoint
+     * @param setpoint setpoint value
+     */
     @Override
     public void setSetpoint(Distance setpoint) {
         PID.setSetpoint(setpoint.in(Meters));
         running = true;
     }
 
+    /**
+     * returns the elevator encoders value
+     * @return values of the encoder
+     */
     @Override
     public Distance getPosition() {
         return Meters.of(elevatorSim.getPositionMeters());

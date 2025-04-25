@@ -14,6 +14,7 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
@@ -45,6 +46,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     private StatusSignal<Temperature> secondaryDeviceTemp;
 
     public ElevatorIOTalonFX(int mainMotorID, int followerMotorID) {
+
         m_mainMotor = new TalonFX(mainMotorID);
         m_followerMotor = new TalonFX(followerMotorID);
 
@@ -56,13 +58,12 @@ public class ElevatorIOTalonFX implements ElevatorIO {
             .withSupplyCurrentLimitEnable(true);
         m_mainMotorConfig.apply(m_currentConfig);
         m_followerMotorConfig.apply(m_currentConfig);
-        
+
         m_encoderConfigs = new FeedbackConfigs()
             .withSensorToMechanismRatio(1.0 / kElevator.kRotationConverter);
         m_mainMotorConfig.apply(m_encoderConfigs);
         m_followerMotorConfig.apply(m_encoderConfigs);
 
-        //PID
         m_pidConfig = new Slot0Configs()
             .withKP(kElevator.TALONFX_PID.kP)
             .withKI(kElevator.TALONFX_PID.kI)
@@ -81,7 +82,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         m_request = new PositionVoltage(0).withSlot(0);
 
         m_mainMotor.setPosition(0);
-
+ 
         motorPosition = m_mainMotor.getPosition();
         mainDeviceVoltage = m_mainMotor.getMotorVoltage();
         mainDeviceCurrent = m_mainMotor.getSupplyCurrent();
@@ -90,6 +91,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         secondaryDeviceCurrent = m_followerMotor.getSupplyCurrent();
         secondaryDeviceTemp = m_followerMotor.getDeviceTemp();
 
+        // Update all the values
         BaseStatusSignal.setUpdateFrequencyForAll(
             50,
             motorPosition,
@@ -100,37 +102,61 @@ public class ElevatorIOTalonFX implements ElevatorIO {
             secondaryDeviceCurrent, 
             secondaryDeviceTemp
         );
+
         m_mainMotor.optimizeBusUtilization();
         m_followerMotor.optimizeBusUtilization();
     }
 
+    /**
+     * set motor to assigned voltage
+     * @param volts assigned voltage
+     */
     @Override
     public void setMotorVoltage(double volts) {
         m_mainMotor.setVoltage(volts);
     }
 
+    /**
+     * Stop the motor
+     */
     @Override
     public void stopMotor() {
         m_mainMotor.stopMotor();
     }
 
+    /**
+     * Zero the encoder values
+     */
     @Override
     public void zeroEncoder() {
         m_mainMotor.setPosition(0);
     }
 
+    /**
+     * return encoder values 
+     * @return encoder values
+     */
     @Override
     public Distance getPosition() {
         return Meters.of(m_mainMotor.getPosition().getValueAsDouble());
     }
 
+    /**
+     * set elevator position to assigned setpoint
+     * @param setpoint setpoint value
+     */
     @Override
     public void setSetpoint(Distance setpoint) {
         m_mainMotor.setControl(m_request.withPosition(setpoint.in(Meters)));
     }
 
+    /**
+     * updates all the inputs values
+     * @param inputs inputs values 
+     */
     @Override
     public void updateInputs(ElevatorInputs inputs) {
+        //Update all variables values for the main motors
         inputs.mainMotorConnection = BaseStatusSignal.refreshAll(
             motorPosition,
             mainDeviceVoltage, 
@@ -142,6 +168,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
         inputs.mainMotorTemperature = mainDeviceTemp.getValueAsDouble();
         inputs.mainMotorPosition = motorPosition.getValueAsDouble();
         
+        //Update all variables values for the follower motors
         inputs.followerMotorConnection = BaseStatusSignal.refreshAll(
             secondaryrDeviceVoltage, 
             secondaryDeviceCurrent, 
