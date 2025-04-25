@@ -20,21 +20,31 @@ public class ArmPivot extends SubsystemBase {
     private ArmPivotIO io;
     private static ArmPivotInputsAutoLogged inputs;
 
+    // Creat alerts
     private final Alert motorConnectedAlert = new Alert("Arm Motor Not Connected"     , AlertType.kError);
     private final Alert cancoderConnected   = new Alert("CANCoder [Arm] Not Connected", AlertType.kError);
     private final Alert CANCoderAlertOrange = new Alert("CANCoder [Arm] Orange"       , AlertType.kWarning);
     private final Alert CANCoderAlertRed    = new Alert("CANCoder [Arm] Red"          , AlertType.kError);
 
-  
     public ArmPivot(ArmPivotIO io) {
         this.io = io;
+        // Logging
         inputs = new ArmPivotInputsAutoLogged();
     }
 
+    /*
+     * Gets arm's position
+     * @return position
+    */
     public Angle getPosition() {
         return io.getPosition();
     }
 
+    /*
+     * Move arm to setpoint given position in radians
+     * @param positionRad (arm's position in radians)
+     * @return command sequence (sets arm setpoint, moves arm until position is within range of setpoint)
+     */
     public Command moveArm(Angle positionRad) {
         return Commands.sequence(
             Commands.runOnce(() -> io.setSetpoint(positionRad), this),
@@ -42,10 +52,16 @@ public class ArmPivot extends SubsystemBase {
         );
     }
 
+    /*
+     * Sets given voltage
+     * @param voltage
+     * @return set voltage
+     */
     public Command setVoltage(double volatge){
         return Commands.runOnce(() -> io.setVoltage(volatge), this);
     }
 
+    // Logs inputs from sensor data
     @Override
     public void periodic() {
         io.updateInputs(inputs);

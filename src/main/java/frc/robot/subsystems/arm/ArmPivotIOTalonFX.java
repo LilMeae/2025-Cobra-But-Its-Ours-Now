@@ -33,6 +33,7 @@ public class ArmPivotIOTalonFX implements ArmPivotIO {
     private CANcoder canCoderSensor;
     private final PositionVoltage positionVoltage;
 
+    // Status signals
     private StatusSignal<Angle> positionSignal;
     private StatusSignal<AngularVelocity> velocitySignal;
     private StatusSignal<Voltage> deviceVoltage;
@@ -46,6 +47,7 @@ public class ArmPivotIOTalonFX implements ArmPivotIO {
         armMotor = new TalonFX(canID);
         canCoderSensor = new CANcoder(sensorID);
 
+        // Apply/configure settings to CANCoder
         canCoderSensor.getConfigurator().apply(
             new CANcoderConfiguration().MagnetSensor
             .withAbsoluteSensorDiscontinuityPoint(Degrees.of(180))
@@ -55,18 +57,21 @@ public class ArmPivotIOTalonFX implements ArmPivotIO {
 
         TalonFXConfigurator configurator = armMotor.getConfigurator();
 
+        // Apple/configure current settings
         CurrentLimitsConfigs limitConfigs = new CurrentLimitsConfigs();
         limitConfigs.SupplyCurrentLimit = 30;
         limitConfigs.SupplyCurrentLimitEnable = true;
 
         configurator.apply(limitConfigs);
 
+        // Apply/configure motor output
         MotorOutputConfigs outputConfigs = new MotorOutputConfigs()
             .withInverted(InvertedValue.Clockwise_Positive)
             .withNeutralMode(NeutralModeValue.Brake);
 
         configurator.apply(outputConfigs);
 
+        // Apply/configure CANCoder settings
         FeedbackConfigs feedBackConfig = new FeedbackConfigs()
             .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
             .withRemoteCANcoder(canCoderSensor)
@@ -77,6 +82,7 @@ public class ArmPivotIOTalonFX implements ArmPivotIO {
 
         positionVoltage = new PositionVoltage(0).withSlot(0);
 
+        // Apply PID and feedforward
         Slot0Configs slot0Configs = new Slot0Configs();
         slot0Configs.kP = kArmPivot.kP;
         slot0Configs.kI = kArmPivot.kI;
@@ -86,6 +92,7 @@ public class ArmPivotIOTalonFX implements ArmPivotIO {
 
         armMotor.getConfigurator().apply(slot0Configs);
 
+        // Set status signals
         positionSignal = armMotor.getPosition();
         velocitySignal = armMotor.getVelocity();
         deviceVoltage = armMotor.getMotorVoltage();
@@ -110,21 +117,37 @@ public class ArmPivotIOTalonFX implements ArmPivotIO {
         // canCoderSensor.optimizeBusUtilization();
     }
 
+    /*
+     * Set voltage
+     * @param volts
+     */
     @Override
     public void setVoltage(double volts) {
         armMotor.setVoltage(volts);
     }
     
+    /*
+     * Set arm's setpoint
+     * @param armPosiitonRad
+     */
     @Override
     public void setSetpoint(Angle armPositionRad) {
         PhoenixUtil.tryUntilOk(3, () -> armMotor.setControl(positionVoltage.withPosition(armPositionRad)));
     }
 
+    /*
+     * Get arm's current position
+     * @return arm's position
+     */
     @Override
     public Angle getPosition() {
         return armMotor.getPosition().getValue();
     }
 
+    /*
+     * Update inputs with hardware data
+     * @param inputs
+     */
     @Override
     public void updateInputs(ArmPivotInputs inputs) {
         inputs.connected = BaseStatusSignal.refreshAll(
