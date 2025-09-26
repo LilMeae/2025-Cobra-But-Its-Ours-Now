@@ -14,10 +14,7 @@
 
 package frc.robot.commands;
 
-import static edu.wpi.first.units.Units.*;
-
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -27,28 +24,18 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
-import edu.wpi.first.units.measure.LinearAcceleration;
-import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants.kAutoAlign;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.util.AlignHelper;
-import frc.robot.util.ProfiledController;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-import org.littletonrobotics.junction.Logger;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.util.FlippingUtil;
 
 public class DriveCommands {
   private static final double DEADBAND = 0.1;
@@ -199,120 +186,6 @@ public class DriveCommands {
         // Reset PID controller when command starts
         .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
   }
-    /**
-     * Aligns to a specifc point on the field
-     * @param drive The drive subsystem
-     * @param target the target position
-     * @param maxVelo the max velocity of the robot
-     * @param maxAccel the max acceleration of the robot
-     * @return A command that will automatically align to a point on the field
-     */
-    @SuppressWarnings("resource")
-    public static Command alignToPoint(Drive drive, Supplier<Pose2d> target, Supplier<LinearVelocity> maxVelo, Supplier<LinearAcceleration> maxAccel) {
-        ProfiledController translationController =
-            new ProfiledController(
-                kAutoAlign.ALIGN_PID,
-                maxVelo.get().in(MetersPerSecond),
-                maxAccel.get().in(MetersPerSecondPerSecond)
-            );
-
-        PIDController angleController =
-            new PIDController(
-                ANGLE_KP,
-                0.0,
-                ANGLE_KD
-            );
-        angleController.enableContinuousInput(-Math.PI, Math.PI);
-
-        return Commands.sequence(
-            Commands.runOnce(() -> {
-                // Reset speeds of the controller
-                aligned = false;
-
-                ChassisSpeeds speeds = drive.getFieldRelativeSpeeds();
-
-                translationController.reset(-Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond));
-                angleController.reset();
-            }),
-            Commands.run(() -> {
-                // Update the contraints of the controller
-                translationController.setContraints(maxVelo.get().in(MetersPerSecond), maxAccel.get().in(MetersPerSecondPerSecond));
-                
-                Pose2d robotPose = drive.getPose();
-                Pose2d targetPose = target.get();
-
-                // Red alliance flip
-                if (AutoBuilder.shouldFlip())
-                    targetPose = FlippingUtil.flipFieldPose(targetPose);
-                
-                double xDiff = targetPose.getX() - robotPose.getX();
-                double yDiff = targetPose.getY() - robotPose.getY();
-
-                double totalDiff = Math.hypot(xDiff, yDiff);
-
-                double speed = Math.abs(translationController.calculate(totalDiff, 0.0));
-        
-                double omega =
-                angleController.calculate(
-                    robotPose.getRotation().getRadians(), targetPose.getRotation().getRadians());
-                                            
-                // Trig cacl for converting back to field relative
-                double speedX = speed * (xDiff / totalDiff);
-                double speedY = speed * (yDiff / totalDiff);
-                
-                drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speedX, speedY, omega, drive.getRotation()));
-
-                Logger.recordOutput("AutoAlign/Target", targetPose);
-                Logger.recordOutput("AutoAlign/SpeedOutput", speed);
-                Logger.recordOutput("AutoAlign/OmegaOutput", omega);
-                Logger.recordOutput("AutoAlign/MaxVelo [m per s]", translationController.getMaxVelocity());
-                Logger.recordOutput("AutoAlign/MaxAccel [m per s^2]", translationController.getMaxAcceleration());
-            }, drive)
-        ).until(() -> {
-            Pose2d robotPose = drive.getPose();
-            Pose2d targetPose = target.get();
-            if (AutoBuilder.shouldFlip())
-                targetPose = FlippingUtil.flipFieldPose(targetPose);
-
-            Angle difference = AlignHelper.rotationDifference(targetPose.getRotation(), robotPose.getRotation());
-
-            Distance distance = Meters.of(Math.hypot(robotPose.getX() - targetPose.getX(), robotPose.getY() - targetPose.getY()));
-
-            ChassisSpeeds speeds = drive.getChassisSpeeds();
-            LinearVelocity robotSpeed = MetersPerSecond.of(Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond));
-
-            Logger.recordOutput("AutoAlign/Distance To Alignment [cm]", distance.in(Centimeters));
-            Logger.recordOutput("AutoAlign/Angle To Alignment [degrees]", difference.in(Degrees));
-            Logger.recordOutput("AutoAlign/Velocity [m per s]", robotSpeed.in(MetersPerSecond));
-        
-            if (DriverStation.isAutonomous())
-                return
-                    distance.lte(kAutoAlign.TRANSLATION_TOLERANCE) &&
-                    difference.lte(kAutoAlign.ROTATION_TOLERANCE) &&
-                    robotSpeed.lte(kAutoAlign.VELOCITY_TOLERANCE);
-            else
-                return
-                    distance.lte(kAutoAlign.TRANSLATION_TOLERANCE) &&
-                    difference.lte(kAutoAlign.ROTATION_TOLERANCE) &&
-                    robotSpeed.lte(kAutoAlign.AUTO_VELOCITY_TOLERANCE);
-        }
-    ).andThen(
-        Commands.runOnce(() -> {
-            drive.stop();
-            aligned = true;
-        }, drive)
-    );
-    }
-
-    /**
-     * Aligns to a specifc point on the field using max auto align velocity and accel
-     * @param drive drive subsystem
-     * @param target the target pose
-     * @return An auto align Command
-     */
-    public static Command alignToPoint(Drive drive, Supplier<Pose2d> target) {
-        return alignToPoint(drive, target, () -> kAutoAlign.MAX_AUTO_ALIGN_VELOCITY_FAST, () -> kAutoAlign.MAX_AUTO_ALIGN_ACCELERATION_FAST);
-    }
 
   /**
    * Measures the velocity feedforward constants for the drive motors.

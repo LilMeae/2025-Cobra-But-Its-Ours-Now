@@ -36,7 +36,6 @@ import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.RobotBase;
-import frc.robot.commands.AutoCommands.kReefPosition;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.FieldMirror;
@@ -115,58 +114,7 @@ public final class Constants {
     public static final Time VELOCITY_TIME_ADJUSTEDMENT = Milliseconds.of(750);
     public static final int  TIME_ADJUSTMENT_TIMEOUT = 10;
 
-    public static final class kReef {
-      public static final Transform2d LEFT_OFFSET_TO_BRANCH  = new Transform2d(0.35, 0.18, new Rotation2d());
-      public static final Transform2d RIGHT_OFFSET_TO_BRANCH = new Transform2d(0.35, -0.18, new Rotation2d());
-
-      /**
-       * Generates a pose that is useable for us of each reef face.
-       * @param rotation The rotation of the face
-       * @return a pose2d of that face
-       */
-      private static final Pose2d generatePose(Rotation2d rotation) {
-        final double mx = 4.48945;
-        final double my = FlippingUtil.fieldSizeY / 2.0;
-        final double r = 1.64;
-
-        return new Pose2d(r * -rotation.getCos() + mx, r * -rotation.getSin() + my, rotation);
-      } 
-
-      public static final HashMap<kReefPosition, Pose2d> TARGETS = new HashMap<>();
-      static {
-        TARGETS.put(kReefPosition.CLOSE_LEFT,   generatePose(Rotation2d.fromDegrees(-60.000)));
-        TARGETS.put(kReefPosition.FAR_LEFT,     generatePose(Rotation2d.fromDegrees(-120.000)));
-        TARGETS.put(kReefPosition.FAR,          generatePose(Rotation2d.fromDegrees(180.000)));
-        TARGETS.put(kReefPosition.CLOSE,        generatePose(Rotation2d.fromDegrees(0.000)));
-        
-        TARGETS.put(kReefPosition.CLOSE_RIGHT,  FieldMirror.mirrorPose(TARGETS.get(kReefPosition.CLOSE_LEFT)));
-        TARGETS.put(kReefPosition.FAR_RIGHT,    FieldMirror.mirrorPose(TARGETS.get(kReefPosition.FAR_LEFT)));
-      }
-
-      public static final HashMap<Pose2d, ScoringLevel> ALGAE_HEIGHTS = new HashMap<>();
-      static {
-        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.CLOSE_LEFT ), ScoringLevel.LEVEL2_ALGAE);
-        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.CLOSE      ), ScoringLevel.LEVEL3_ALGAE);
-        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.CLOSE_RIGHT), ScoringLevel.LEVEL2_ALGAE);
-        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.FAR_RIGHT  ), ScoringLevel.LEVEL3_ALGAE);
-        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.FAR        ), ScoringLevel.LEVEL2_ALGAE);
-        ALGAE_HEIGHTS.put(TARGETS.get(kReefPosition.FAR_LEFT   ), ScoringLevel.LEVEL3_ALGAE);
-      }
-
-      public static final HashMap<String, Pose2d> BRANCHES = new HashMap<>();
-      static {
-        for (Entry<kReefPosition, Pose2d> entry : TARGETS.entrySet()) {
-            BRANCHES.put(entry.getKey().name() + ".L", entry.getValue().transformBy( LEFT_OFFSET_TO_BRANCH));
-            BRANCHES.put(entry.getKey().name() + ".R", entry.getValue().transformBy(RIGHT_OFFSET_TO_BRANCH));
-        }
-      }
-
-      public static final ArrayList<Pose2d> L1_POSES = new ArrayList<>();
-      static {
-        for (int i = 0; i < 6; i++)
-            L1_POSES.add(generatePose(Rotation2d.fromDegrees(25 + i * 60)));
-      }
-    }
+   
 
     public static final class kStation {
         private static final Distance DISTANCE_RAMPS = Inches .of( 8.000);

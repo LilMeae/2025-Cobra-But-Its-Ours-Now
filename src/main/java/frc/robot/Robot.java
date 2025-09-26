@@ -121,30 +121,8 @@ public class Robot extends LoggedRobot {
 
     VisionIOLimelight.forwardLimelightPorts();
 
-    // Disable of currently running setpoints and command
-    new Trigger(DriverStation::isDisabled)
-        .onTrue(
-            Commands.parallel(
-                robotContainer.sys_armPivot.setVoltage(0.0).ignoringDisable(true),
-                robotContainer.sys_elevator.startManualMove(0.0).ignoringDisable(true),
-                robotContainer.sys_endEffector.setVoltage(0.0).ignoringDisable(true)
-            ).ignoringDisable(true)
-        );
-
     // Spit out game piece if no time left in match.
-    new Trigger(() -> matchTime <= 0.5) // Note never got this to work...
-        .and(DriverStation::isTeleopEnabled)
-        .onTrue(
-            Commands.either(
-                Commands.runOnce(() ->
-                    robotContainer.sys_endEffector.setVoltage(ScoringLevel.LEVEL4.voltage, false)
-                ),
-                Commands.runOnce(() ->
-                    robotContainer.sys_endEffector.setVoltage(ScoringLevel.LEVEL1.voltage, false)
-                ),
-                robotContainer.sys_endEffector::coralDetected
-            )
-        );
+
   }
 
   /** This function is called periodically during all modes. */
@@ -167,7 +145,6 @@ public class Robot extends LoggedRobot {
     SmartDashboard.putNumber("Time", matchTime);
 
     StructHelper.update();
-    robotContainer.updateScoringPosition();
   }
 
   /** This function is called once when the robot is disabled. */
@@ -184,12 +161,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousInit() {
     CommandScheduler.getInstance().clearComposedCommands();
-
-    Command autoCommand = robotContainer.getAutonomousCommand();
-
-    if (autoCommand == null) return;
-    
-    autoCommand.schedule();
 
     RobotContainer.isTelopAuto = robotContainer.runTelop.getAsBoolean();
     autoStartingConfigAlert.set(false);
@@ -219,12 +190,10 @@ public class Robot extends LoggedRobot {
     }
 
     if (robotContainer.runTelop.getAsBoolean())
-        robotContainer.telopAutoCommand.schedule();
 
     autoStartingConfigAlert.set(false);
 
     robotContainer.sys_drive.brakeMode();
-    robotContainer.sys_endEffector.brake();
   }
 
   /** This function is called periodically during operator control. */
